@@ -1,0 +1,122 @@
+.empty,
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--sp-3);
+  padding: var(--sp-10) var(--sp-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.icon {
+  color: var(--text-subtle);
+  display: inline-flex;
+}
+.icon svg {
+  width: 40px;
+  height: 40px;
+}
+.title {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 650;
+}
+.desc {
+  color: var(--text-muted);
+  max-width: 56ch;
+}
+.action {
+  margin-top: var(--sp-2);
+}
+.error {
+  border-style: solid;
+  border-color: var(--danger-border);
+}
+.errIcon {
+  color: var(--danger);
+}
+.details {
+  max-width: 100%;
+  text-align: left;
+}
+.detailBody {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+.detailBody ul {
+  padding-left: var(--sp-5);
+}
+.pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--fs-code);
+}
+.boundary {
+  padding: var(--sp-8) var(--sp-4);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.skel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.line,
+.block,
+.optionSk {
+  display: block;
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.line {
+  height: 14px;
+}
+.short {
+  width: 40%;
+}
+.optionSk {
+  height: 52px;
+  border-radius: var(--r-md);
+}
+.qcard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-8);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+}
+.block {
+  border-radius: var(--r-lg);
+}
+.dash {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+.dashGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--sp-4);
+}
+.dashGrid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: var(--sp-4);
+}
+.loadingRegion {
+  min-width: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .line,
+  .block,
+  .optionSk {
+    animation: none;
+  }
+}

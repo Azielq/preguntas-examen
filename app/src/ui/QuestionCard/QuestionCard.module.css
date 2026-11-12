@@ -1,0 +1,108 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding: var(--sp-8);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-1);
+  min-width: 0;
+}
+@media (max-width: 767px) {
+  .card {
+    padding: var(--sp-5);
+    gap: var(--sp-4);
+  }
+}
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2) var(--sp-3);
+}
+.label {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.headRight {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+.pos,
+.posStatic {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0 var(--sp-2);
+}
+.pos {
+  min-height: 44px;
+  min-width: 44px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 var(--sp-3);
+}
+.pos:hover {
+  background: var(--surface-2);
+}
+.badgeRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.help {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-muted);
+  margin-top: calc(-1 * var(--sp-2));
+}
+.helpMain {
+  font-weight: 600;
+  color: var(--text);
+}
+.tooMany {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--warning);
+  margin-top: calc(-1 * var(--sp-2));
+}
+.live:empty {
+  display: none;
+}
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-4);
+}
+.dups {
+  display: flex;
+  gap: var(--sp-2);
+  align-items: flex-start;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+.dups svg {
+  flex: none;
+  margin-top: 3px;
+}
+.notes {
+  margin: var(--sp-1) 0 0;
+  padding-left: var(--sp-5);
+  font-size: var(--fs-sm);
+}

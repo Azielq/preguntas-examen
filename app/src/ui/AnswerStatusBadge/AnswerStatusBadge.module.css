@@ -1,0 +1,58 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: 3px var(--sp-2);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  font-weight: 600;
+  border: 1px solid;
+  width: fit-content;
+  max-width: 100%;
+}
+.sm {
+  font-size: var(--fs-xs);
+  padding: 1px 6px;
+}
+.pdf {
+  color: var(--info);
+  background: var(--info-soft);
+  border-color: var(--info-border);
+}
+.ai_proposed {
+  color: var(--warning);
+  background: var(--warning-soft);
+  border: 1px dashed var(--warning-border);
+}
+.pending,
+.unknown {
+  color: var(--warning);
+  background: var(--warning-soft);
+  border: 2px solid var(--warning-border);
+}
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+}
+.blockTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-weight: 650;
+}
+.blockText {
+  color: var(--text);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+.reasonLabel {
+  font-weight: 600;
+}
+.reasons {
+  margin: var(--sp-1) 0 0;
+  padding-left: var(--sp-5);
+}

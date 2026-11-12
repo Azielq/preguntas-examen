@@ -1,0 +1,9 @@
+node_modules
+dist
+public/bank
+e2e-output
+*.log
+scripts/__pycache__
+data/_work
+
+.vercel

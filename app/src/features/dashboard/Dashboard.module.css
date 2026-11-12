@@ -1,0 +1,28 @@
+.continue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+.num {
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ringNum {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+}
+.doc {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}

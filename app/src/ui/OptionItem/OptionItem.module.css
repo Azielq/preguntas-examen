@@ -1,0 +1,158 @@
+.row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  min-height: 52px;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    border-color var(--dur-1) var(--ease-out);
+}
+.row:hover:not(.locked) {
+  background: var(--surface-2);
+}
+.row:has(.input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  pointer-events: none;
+}
+.chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border-strong);
+  font-weight: 700;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  background: var(--surface);
+  transition:
+    background-color var(--dur-1) var(--ease-out),
+    color var(--dur-1) var(--ease-out);
+}
+.body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-4);
+  padding-top: 2px;
+}
+.text {
+  flex: 1 1 22ch;
+  min-width: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+.mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  animation: fade-in var(--dur-2) var(--ease-out);
+}
+.kbd {
+  flex: none;
+  display: none;
+  padding-top: 4px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .kbd {
+    display: inline-flex;
+  }
+}
+@media (max-width: 767px) {
+  .body {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .text {
+    flex: none;
+  }
+}
+
+.locked {
+  cursor: default;
+}
+
+.selected {
+  background: var(--accent-soft);
+  border: 2px solid var(--accent);
+  padding: calc(var(--sp-3) - 0.5px) calc(var(--sp-4) - 0.5px);
+}
+.selected .chip {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.correct {
+  background: var(--success-soft);
+  border: 2px solid var(--success-border);
+  padding: calc(var(--sp-3) - 0.5px) calc(var(--sp-4) - 0.5px);
+}
+.correct .chip {
+  background: var(--success-border);
+  border-color: var(--success-border);
+  color: var(--surface);
+}
+.correct .mark {
+  color: var(--success);
+}
+
+.incorrect {
+  background: var(--danger-soft);
+  border: 2px solid var(--danger-border);
+  padding: calc(var(--sp-3) - 0.5px) calc(var(--sp-4) - 0.5px);
+}
+.incorrect .chip {
+  background: var(--danger-border);
+  border-color: var(--danger-border);
+  color: var(--surface);
+}
+.incorrect .mark {
+  color: var(--danger);
+}
+
+.missed {
+  border: 2px dashed var(--success-border);
+  padding: calc(var(--sp-3) - 0.5px) calc(var(--sp-4) - 0.5px);
+}
+.missed .chip {
+  border-color: var(--success-border);
+  color: var(--success);
+}
+.missed .mark {
+  color: var(--success);
+}
+
+.neutral {
+  border-color: var(--border);
+}
+.neutral .mark {
+  color: var(--text-muted);
+}
+.neutral:has(.input:checked) .chip {
+  border-color: var(--border-strong);
+  color: var(--text);
+  background: var(--surface-2);
+}

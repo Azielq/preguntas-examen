@@ -1,0 +1,27 @@
+.stem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  max-width: 72ch;
+}
+.text {
+  white-space: pre-wrap;
+  font-size: var(--fs-stem);
+  line-height: var(--lh-stem);
+  font-weight: 450;
+}
+.code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-code);
+  line-height: 1.55;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-4);
+  overflow-x: auto;
+  white-space: pre;
+  max-width: 100%;
+}
+.code code {
+  font-family: inherit;
+}

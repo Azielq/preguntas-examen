@@ -1,0 +1,194 @@
+{
+ "bankVersion": "3efc5f1a3b",
+ "stats": {
+  "gorgotsias": {
+   "found": 1140,
+   "answerFromPdf": 1132,
+   "aiProposedAnswers": 0,
+   "pending": 8,
+   "scorable": 1132,
+   "multiple": 0,
+   "explanationFromPdf": 1140,
+   "explanationAi": 0,
+   "withNotes": 11,
+   "bySection": {
+    "cap1": 110,
+    "cap2": 110,
+    "cap3": 90,
+    "cap4": 150,
+    "cap5": 80,
+    "sim1": 100,
+    "sim2": 100,
+    "sim3": 100,
+    "sim4": 100,
+    "sim5": 100,
+    "sim6": 100
+   }
+  },
+  "messer": {
+   "found": 45,
+   "answerFromPdf": 45,
+   "aiProposedAnswers": 0,
+   "pending": 0,
+   "scorable": 45,
+   "multiple": 1,
+   "explanationFromPdf": 0,
+   "explanationAi": 45,
+   "withNotes": 0,
+   "bySection": {
+    "pe-a": 45
+   }
+  }
+ },
+ "pbqSolutions": 5,
+ "pending": [
+  {
+   "id": "gor-cap1-0023",
+   "label": "Question 23",
+   "page": 19,
+   "reasons": [
+    "Contradicción en el PDF: la explicación que figura con este número (pág. 75) indica la letra C con un texto que no es la opción C de esta pregunta (pág. 19); parece pertenecer a otra pregunta. No se resolvió automáticamente."
+   ]
+  },
+  {
+   "id": "gor-cap1-0024",
+   "label": "Question 24",
+   "page": 19,
+   "reasons": [
+    "Contradicción en el PDF: la explicación que figura con este número (pág. 76) indica la letra C con un texto que no es la opción C de esta pregunta (pág. 19); parece pertenecer a otra pregunta. No se resolvió automáticamente."
+   ]
+  },
+  {
+   "id": "gor-cap1-0026",
+   "label": "Question 26",
+   "page": 20,
+   "reasons": [
+    "Contradicción en el PDF: la explicación que figura con este número (pág. 78) indica la letra C con un texto que no es la opción C de esta pregunta (pág. 20); parece pertenecer a otra pregunta. No se resolvió automáticamente."
+   ]
+  },
+  {
+   "id": "gor-sim1-0064",
+   "label": "Question 64",
+   "page": 795,
+   "reasons": [
+    "Contradicción en el PDF: la explicación que figura con este número (pág. 876) indica la letra C con un texto que no es la opción C de esta pregunta (pág. 795); parece pertenecer a otra pregunta. No se resolvió automáticamente."
+   ]
+  },
+  {
+   "id": "gor-sim1-0075",
+   "label": "Question 75",
+   "page": 799,
+   "reasons": [
+    "Contradicción en el PDF: la explicación que figura con este número (pág. 887) indica la letra C con un texto que no es la opción C de esta pregunta (pág. 799); parece pertenecer a otra pregunta. No se resolvió automáticamente."
+   ]
+  },
+  {
+   "id": "gor-sim3-0254",
+   "label": "Question 254",
+   "page": 1072,
+   "reasons": [
+    "Contradicción en el PDF: la explicación que figura con este número (pág. 1147) indica la letra C con un texto que no es la opción C de esta pregunta (pág. 1072); parece pertenecer a otra pregunta. No se resolvió automáticamente."
+   ]
+  },
+  {
+   "id": "gor-sim6-0514",
+   "label": "Question 514",
+   "page": 1479,
+   "reasons": [
+    "Contradicción en el PDF: la explicación que figura con este número (pág. 1527) indica la letra A con un texto que no es la opción A de esta pregunta (pág. 1479); parece pertenecer a otra pregunta. No se resolvió automáticamente.",
+    "Contradicción en el PDF: en la sección de respuestas (pág. 1527) las opciones de esta pregunta son distintas (A: «Multiple consecutive connection attempts to different ports …») y la explicación no corresponde a las opciones de la pág. 1479."
+   ]
+  },
+  {
+   "id": "gor-sim6-0592",
+   "label": "Question 592",
+   "page": 1509,
+   "reasons": [
+    "Contradicción en el PDF: la explicación que figura con este número (pág. 1610) indica la letra C con un texto que no es la opción C de esta pregunta (pág. 1509); parece pertenecer a otra pregunta. No se resolvió automáticamente."
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "id": "gor-cap2-0216",
+   "notes": [
+    "La copia de la pregunta en la sección de respuestas (pág. 317) difiere ligeramente del enunciado (variación del propio PDF); se conserva el texto de la sección de preguntas."
+   ]
+  },
+  {
+   "id": "gor-cap4-0368",
+   "notes": [
+    "La copia de la pregunta en la sección de respuestas (pág. 562) sólo difiere en la maquetación (ej. '((A)')."
+   ]
+  },
+  {
+   "id": "gor-cap4-0414",
+   "notes": [
+    "Duplicado idéntico con una letra correcta distinta en otra ubicación: gor-sim6-0514"
+   ]
+  },
+  {
+   "id": "gor-sim1-0037",
+   "notes": [
+    "La copia de la pregunta en la sección de respuestas (pág. 848) tiene el texto de las opciones desordenado (error de maquetación del PDF); la explicación concuerda con las opciones de la sección de preguntas (pág. 785)."
+   ]
+  },
+  {
+   "id": "gor-sim2-0174",
+   "notes": [
+    "La copia de la pregunta en la sección de respuestas (pág. 1026) sólo difiere en la maquetación (ej. '((A)')."
+   ]
+  },
+  {
+   "id": "gor-sim2-0175",
+   "notes": [
+    "La explicación está numerada con otro número en el PDF; se vinculó por posición y el contenido concuerda con la pregunta."
+   ]
+  },
+  {
+   "id": "gor-sim4-0362",
+   "notes": [
+    "La explicación está numerada con otro número en el PDF; se vinculó por posición y el contenido concuerda con la pregunta."
+   ]
+  },
+  {
+   "id": "gor-sim4-0381",
+   "notes": [
+    "La copia de la pregunta en la sección de respuestas (pág. 1314) sólo difiere en la maquetación (ej. '((A)')."
+   ]
+  },
+  {
+   "id": "gor-sim4-0384",
+   "notes": [
+    "La copia de la pregunta en la sección de respuestas (pág. 1318) difiere ligeramente del enunciado (variación del propio PDF); se conserva el texto de la sección de preguntas."
+   ]
+  },
+  {
+   "id": "gor-sim6-0514",
+   "notes": [
+    "Duplicado idéntico con una letra correcta distinta en otra ubicación: gor-cap4-0414"
+   ]
+  },
+  {
+   "id": "gor-sim6-0531",
+   "notes": [
+    "La explicación está numerada con otro número en el PDF; se vinculó por posición y el contenido concuerda con la pregunta."
+   ]
+  }
+ ],
+ "identicalDuplicateGroups": 534,
+ "questionsInIdenticalDuplicateGroups": 1133,
+ "duplicateAnswerConflicts": [
+  [
+   "gor-cap4-0414",
+   "gor-sim6-0514"
+  ]
+ ],
+ "similarPairs": 0,
+ "answerLetterDistribution": {
+  "C": 540,
+  "B": 337,
+  "D": 182,
+  "A": 81
+ }
+}

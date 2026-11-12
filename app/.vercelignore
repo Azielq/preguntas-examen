@@ -1,0 +1,7 @@
+node_modules
+dist
+public/bank
+e2e-output
+*.log
+data/_work
+scripts/__pycache__

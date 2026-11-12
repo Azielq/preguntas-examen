@@ -1,0 +1,144 @@
+/* Tokens semánticos (PLAN 2). Los componentes usan solo tokens, nunca hex. */
+:root,
+:root[data-theme='light'] {
+  --bg: #f6f5fa;
+  --surface: #ffffff;
+  --surface-2: #efedf5;
+  --border: #dcd9e6;
+  --border-strong: #85819a;
+  --text: #1b1a23;
+  --text-muted: #565366;
+  --text-subtle: #6b687c;
+  --accent: #6a35d9;
+  --accent-hover: #5727bd;
+  --on-accent: #ffffff;
+  --accent-soft: #eee8fc;
+  --accent-text: #5224b3;
+  --focus: #6a35d9;
+  --success: #126b40;
+  --success-soft: #e4f3ea;
+  --success-border: #1e8a55;
+  --danger: #b42318;
+  --danger-soft: #fceae8;
+  --danger-border: #d0352a;
+  --warning: #7a4f00;
+  --warning-soft: #fff3d1;
+  --warning-border: #a86f00;
+  --info: #1a57a0;
+  --info-soft: #e6effb;
+  --info-border: #2f74c7;
+  --overlay: rgba(18, 17, 23, 0.55);
+
+  --shadow-1: 0 1px 2px rgba(27, 26, 35, 0.06), 0 1px 1px rgba(27, 26, 35, 0.04);
+  --shadow-2: 0 4px 12px rgba(27, 26, 35, 0.08), 0 1px 3px rgba(27, 26, 35, 0.06);
+  --shadow-3: 0 16px 40px rgba(27, 26, 35, 0.18);
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --bg: #121117;
+  --surface: #1b1a22;
+  --surface-2: #25232e;
+  --border: #35323f;
+  --border-strong: #7f7b92;
+  --text: #eceaf3;
+  --text-muted: #b5b1c4;
+  --text-subtle: #9a96ab;
+  --accent: #7a4cf0;
+  --accent-hover: #6b3de0;
+  --on-accent: #ffffff;
+  --accent-soft: #2a2147;
+  --accent-text: #bba4ff;
+  --focus: #bba4ff;
+  --success: #63d39b;
+  --success-soft: #11301f;
+  --success-border: #3ba872;
+  --danger: #ff8f85;
+  --danger-soft: #3b1614;
+  --danger-border: #e0574b;
+  --warning: #f0c04a;
+  --warning-soft: #33270a;
+  --warning-border: #c4962c;
+  --info: #82b6f7;
+  --info-soft: #12263f;
+  --info-border: #4b8fdf;
+  --overlay: rgba(0, 0, 0, 0.65);
+
+  --shadow-1: none;
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-3: 0 16px 40px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+:root {
+  --font-sans: 'Figtree Variable', 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'Cascadia Mono', Consolas, 'SF Mono', Menlo, 'Liberation Mono', monospace;
+
+  --fs-display: 2.25rem;
+  --lh-display: 1.15;
+  --fs-h1: 1.75rem;
+  --lh-h1: 1.2;
+  --fs-h2: 1.375rem;
+  --lh-h2: 1.3;
+  --fs-h3: 1.125rem;
+  --lh-h3: 1.35;
+  --fs-stem: 1.125rem;
+  --lh-stem: 1.6;
+  --fs-body: 1rem;
+  --lh-body: 1.55;
+  --fs-sm: 0.875rem;
+  --lh-sm: 1.45;
+  --fs-xs: 0.75rem;
+  --lh-xs: 1.35;
+  --fs-code: 0.875rem;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+  --r-pill: 999px;
+
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 280ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --sidebar-w: 264px;
+  --topbar-h: 56px;
+  --bottomnav-h: 64px;
+  --actionbar-h: 68px;
+}
+
+:root[data-text-size='large'] {
+  --fs-stem: 1.3125rem;
+  --fs-body: 1.125rem;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --fs-stem: 1.0625rem;
+  }
+  :root[data-text-size='large'] {
+    --fs-stem: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-1: 0.01ms;
+    --dur-2: 0.01ms;
+    --dur-3: 0.01ms;
+  }
+}

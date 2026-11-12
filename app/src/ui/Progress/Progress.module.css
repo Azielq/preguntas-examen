@@ -1,0 +1,52 @@
+.ring {
+  position: relative;
+  flex: none;
+}
+.track {
+  stroke: var(--surface-2);
+}
+.value {
+  stroke: var(--accent);
+}
+.value.success {
+  stroke: var(--success-border);
+}
+.anim {
+  transition: stroke-dashoffset var(--dur-3) var(--ease-out);
+}
+.center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.bar {
+  display: flex;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  overflow: hidden;
+  width: 100%;
+  min-width: 60px;
+}
+.fill {
+  display: block;
+  height: 100%;
+}
+.accent {
+  background: var(--accent);
+}
+.success {
+  background: var(--success-border);
+}
+.danger {
+  background: var(--danger-border);
+}
+.animW {
+  transition: width var(--dur-3) var(--ease-out);
+}

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Práctica local para CompTIA Security+ SY0-701 con preguntas de dos PDF de estudio." />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <title>Sec+ Práctica</title>
+    <script>
+      // Fija el tema antes del primer render para evitar parpadeo.
+      (function () {
+        var pref = 'system', size = 'normal';
+        try {
+          var p = JSON.parse(localStorage.getItem('secplus:v1:prefs') || 'null');
+          if (p && (p.theme === 'light' || p.theme === 'dark' || p.theme === 'system')) pref = p.theme;
+          if (p && p.textSize === 'large') size = 'large';
+        } catch (e) {}
+        var dark = pref === 'dark' || (pref === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var el = document.documentElement;
+        el.setAttribute('data-theme', dark ? 'dark' : 'light');
+        el.setAttribute('data-theme-pref', pref);
+        el.setAttribute('data-text-size', size);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>Esta app necesita JavaScript.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
