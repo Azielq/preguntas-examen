@@ -43,8 +43,8 @@ export function Timer({
             </span>
             {low && <span className={s.lowText}>{es.timer.low}</span>}
           </span>
-          <button type="button" className={s.toggle} onClick={onToggleHidden}>
-            <EyeOff size={16} aria-hidden="true" /> {es.timer.hide}
+          <button type="button" className={s.toggle} onClick={onToggleHidden} aria-label={es.timer.hideLong} title={es.timer.hideLong}>
+            <EyeOff size={16} aria-hidden="true" /> <span className={s.toggleText}>{es.timer.hide}</span>
           </button>
         </>
       )}

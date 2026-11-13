@@ -8,14 +8,23 @@
   gap: var(--sp-2);
   width: min(420px, calc(100vw - 32px));
   pointer-events: none;
+  overflow-wrap: anywhere;
 }
 @media (max-width: 767px) {
   .region {
     left: var(--sp-4);
     right: var(--sp-4);
     width: auto;
-    bottom: calc(var(--bottomnav-h) + var(--actionbar-h) + var(--sp-2) + env(safe-area-inset-bottom));
+    bottom: calc(var(--bottomnav-h) + var(--sp-2) + var(--safe-bottom));
   }
+}
+/* En pantallas de pregunta los toasts se anclan por encima de la franja y la barra (--q-bottom-stack la
+   publica el marco con el alto real) y se muestran de a uno (PLAN-LAYOUT 8). */
+:global(:root[data-qlayout]) .region {
+  bottom: calc(var(--q-bottom-stack, 0px) + var(--sp-2));
+}
+:global(:root[data-qlayout]) .toast:not(:last-child) {
+  display: none;
 }
 .toast {
   pointer-events: auto;

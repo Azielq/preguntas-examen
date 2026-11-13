@@ -4,6 +4,7 @@ import { KEYS } from '../../storage/keys';
 import { reconcile, reconcileMessage, type ReconcileResult } from '../../storage/reconcile';
 import { emptyProgress } from '../../storage/schema';
 import { flushKey, removeKey, setWriteStatusListener, storageAvailable, writeDebounced, writeKey } from '../../storage/storage';
+import { readStoredAnalyses, useAnalysis } from '../../state/analysisStore';
 import { scheduleExplanations } from '../../state/contentStore';
 import { readStoredExam, useExam } from '../../state/examStore';
 import { usePrefs } from '../../state/prefsStore';
@@ -41,6 +42,15 @@ export function bootstrap(bank: LoadedBank): ReconcileResult | null {
   } else if (r.examActive && r.examActive !== ex.active) {
     writeKey(KEYS.examActive, r.examActive);
   }
+  // Análisis con IA: clave propia; se descartan entradas inválidas y huérfanas una por una
+  const an = readStoredAnalyses(ex.attempts);
+  useAnalysis.getState().setInitial(an.analyses, an.incompatible, an.token);
+  if (an.corrupt) toast(es.storage.corrupt, { tone: 'warning', persistent: true });
+  // si se borran o reemplazan intentos, se eliminan los análisis de intentos que ya no existen
+  useExam.subscribe((s, prev) => {
+    if (s.attempts !== prev.attempts) useAnalysis.getState().prune(new Set(s.attempts.attempts.map((a) => a.id)));
+  });
+
   const msg = reconcileMessage(r);
   if (msg && p.value) toast(msg, { tone: 'info', persistent: true });
 
@@ -53,6 +63,7 @@ export function bootstrap(bank: LoadedBank): ReconcileResult | null {
     if (e.key === KEYS.progress) useProgress.getState().reloadFromStorage();
     else if (e.key === KEYS.prefs) usePrefs.getState().reload();
     else if (e.key === KEYS.examActive || e.key === KEYS.attempts) useExam.getState().reloadFromStorage(e.key);
+    else if (e.key === KEYS.analyses || e.key === KEYS.aiAccess) useAnalysis.getState().reloadFromStorage(e.key, useExam.getState().attempts);
   });
 
   scheduleExplanations(bank.manifest);

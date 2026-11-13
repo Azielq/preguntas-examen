@@ -9,10 +9,45 @@ const { units, byId, unitOf } = bank.indexes;
 const cfg = (c: Partial<ExamConfig>): ExamConfig => ({ source: 'both', count: 10000, timerMinutes: null, includeAiProposed: false, ...c });
 
 describe('buildExam', () => {
-  it('máximos: Ambos 583, Gorgotsias 538, Messer 45', () => {
-    expect(buildExam(bank.questions, units, byId, cfg({}), seededRng(1)).length).toBe(583);
+  it('máximos: todos 793, Gorgotsias 538, Messer extracto 45, Messer libro completo 255 y combinaciones', () => {
+    expect(buildExam(bank.questions, units, byId, cfg({}), seededRng(1)).length).toBe(793);
+    expect(buildExam(bank.questions, units, byId, cfg({ docs: ['gorgotsias', 'messer', 'messerfull'] }), seededRng(1)).length).toBe(793);
     expect(buildExam(bank.questions, units, byId, cfg({ source: 'gorgotsias' }), seededRng(2)).length).toBe(538);
     expect(buildExam(bank.questions, units, byId, cfg({ source: 'messer' }), seededRng(3)).length).toBe(45);
+    expect(buildExam(bank.questions, units, byId, cfg({ source: 'messerfull' }), seededRng(3)).length).toBe(255);
+    // el extracto está contenido en el libro completo: juntos siguen siendo 255 preguntas distintas
+    expect(buildExam(bank.questions, units, byId, cfg({ docs: ['messer', 'messerfull'] }), seededRng(4)).length).toBe(255);
+    expect(buildExam(bank.questions, units, byId, cfg({ docs: ['gorgotsias', 'messer'] }), seededRng(4)).length).toBe(583);
+    expect(buildExam(bank.questions, units, byId, cfg({ docs: ['gorgotsias', 'messerfull'] }), seededRng(4)).length).toBe(793);
+  });
+
+  it('las 45 del extracto y msf-a046..a090 son una sola unidad cada una; con ambos documentos se usa la copia del libro completo', () => {
+    for (let n = 46; n <= 90; n++) {
+      const a = `msr-a0${n}`;
+      const b = `msf-a0${n}`;
+      expect(unitOf.get(a)).toBe(unitOf.get(b));
+      const words = (id: string) => byId.get(id)!.stem.map((x) => x.text).join(' ').split(/\s+/).join(' ');
+      expect(words(a)).toBe(words(b));
+      expect(byId.get(a)!.options.map((o) => o.text)).toEqual(byId.get(b)!.options.map((o) => o.text));
+      expect(byId.get(a)!.correct).toEqual(byId.get(b)!.correct);
+    }
+    // dato del banco: en 5 pares el extracto parte el enunciado en otros bloques (renglones sueltos o prosa como
+    // `code`), así que el contentHash difiere aunque el texto sea el mismo
+    const diffHash = [];
+    for (let n = 46; n <= 90; n++) if (byId.get(`msr-a0${n}`)!.contentHash !== byId.get(`msf-a0${n}`)!.contentHash) diffHash.push(n);
+    expect(diffHash).toEqual([52, 55, 64, 70, 79]);
+    const c = examCandidates(bank.questions, units, byId, { source: 'both', docs: ['messer', 'messerfull'], includeAiProposed: false });
+    expect(c.some((q) => q.doc === 'messer')).toBe(false);
+    // solo el extracto: sigue usando sus propias copias
+    const m = examCandidates(bank.questions, units, byId, { source: 'messer', includeAiProposed: false });
+    expect(m.every((q) => q.doc === 'messer')).toBe(true);
+  });
+
+  it('las preguntas de selección múltiple del libro completo entran al examen (2 y 3 correctas)', () => {
+    const c = examCandidates(bank.questions, units, byId, { source: 'messerfull', includeAiProposed: false });
+    const multi = c.filter((q) => q.selectionType === 'multiple');
+    expect(multi.map((q) => q.id).sort()).toEqual(['msf-a014', 'msf-a023', 'msf-a080', 'msf-b039', 'msf-b057', 'msf-b072', 'msf-b081', 'msf-c054', 'msf-c082']);
+    expect(byId.get('msf-a014')!.correct).toEqual(['A', 'E', 'G']);
   });
 
   for (const seed of [1, 7, 42, 1234, 99999]) {

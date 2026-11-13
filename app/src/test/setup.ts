@@ -2,8 +2,11 @@ import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
 
+// Los tests del servidor y de shared/ corren con `// @vitest-environment node` (sin window).
+const hasDom = typeof window !== 'undefined';
+
 // jsdom no implementa <dialog>.showModal/close: polyfill mínimo para tests.
-if (typeof HTMLDialogElement !== 'undefined') {
+if (hasDom && typeof HTMLDialogElement !== 'undefined') {
   const proto = HTMLDialogElement.prototype as HTMLDialogElement & { __poly?: boolean };
   if (typeof proto.showModal !== 'function') {
     Object.defineProperty(proto, 'open', {
@@ -24,7 +27,7 @@ if (typeof HTMLDialogElement !== 'undefined') {
   }
 }
 
-if (!window.matchMedia) {
+if (hasDom && !window.matchMedia) {
   window.matchMedia = (query: string) =>
     ({
       matches: false,
@@ -38,11 +41,12 @@ if (!window.matchMedia) {
     }) as MediaQueryList;
 }
 
-if (!window.scrollTo || String(window.scrollTo).includes('not implemented')) {
+if (hasDom && (!window.scrollTo || String(window.scrollTo).includes('not implemented'))) {
   window.scrollTo = () => {};
 }
 
 afterEach(() => {
+  if (!hasDom) return;
   cleanup();
   window.localStorage.clear();
 });

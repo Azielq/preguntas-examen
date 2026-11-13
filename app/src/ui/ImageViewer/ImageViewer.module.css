@@ -10,6 +10,42 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-1);
+  min-width: 0;
+}
+.pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+.pageText {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* con < 480 px o en fit-wide, "Ajustar al ancho" y "Restablecer" quedan solo con icono (aria-label y title) */
+@media (max-width: 479px) {
+  .tbText {
+    display: none;
+  }
+}
+:global(:root[data-qlayout='fit-wide']) .tbText {
+  display: none;
+}
+/* relleno: la caja ocupa el alto disponible (PBQ y fragmento con imagen) */
+.fill {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.fill .box {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+:global(:root[data-qlayout='flow']) .fill .box {
+  max-height: 70vh;
+  max-height: 70dvh;
 }
 .level {
   min-width: 4.5ch;
@@ -22,6 +58,7 @@
   position: relative;
   overflow: auto;
   max-height: 70vh;
+  max-height: 70dvh;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface-2);

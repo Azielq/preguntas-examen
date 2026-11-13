@@ -5,6 +5,7 @@ import { ExamResult } from './features/exam/ExamResult';
 import { ExamReview } from './features/exam/ExamReview';
 import { ExamRunning } from './features/exam/ExamRunning';
 import { ExamSetup } from './features/exam/ExamSetup';
+import { StudyPlan } from './features/exam/StudyPlan';
 import { NotFound } from './features/app/NotFound';
 import { PbqDetail } from './features/pbq/PbqDetail';
 import { PbqList } from './features/pbq/PbqList';
@@ -24,6 +25,7 @@ export function AppRoutes() {
         <Route path="examen/en-curso" element={<ExamRunning />} />
         <Route path="examen/resultado/:attemptId" element={<ExamResult />} />
         <Route path="examen/resultado/:attemptId/revision/:n" element={<ExamReview />} />
+        <Route path="examen/resultado/:attemptId/plan" element={<StudyPlan />} />
         <Route path="repaso" element={<ReviewPage />} />
         <Route path="pbq" element={<PbqList />} />
         <Route path="pbq/:pbqId" element={<PbqDetail />} />

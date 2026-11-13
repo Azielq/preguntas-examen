@@ -15,24 +15,33 @@ describe('Dashboard', () => {
     expect(await screen.findByText('Todavía no empezaste.')).toBeInTheDocument();
     expect(screen.getByText('Todavía no hay progreso. Los números aparecen cuando respondas tu primera pregunta.')).toBeInTheDocument();
     expect(screen.queryByText('Acertadas')).toBeNull();
-    expect(screen.getByText(/534 grupos de preguntas repetidas · 586 preguntas distintas/)).toBeInTheDocument();
+    const { report } = readRaw();
+    expect(screen.getByText(new RegExp(`${report.identicalDuplicateGroups} grupos de preguntas repetidas · 796 preguntas distintas`))).toBeInTheDocument();
   });
 
   it('la tabla de importación coincide celda por celda con import-report.json', async () => {
     renderApp('/');
     const table = await screen.findByTestId('import-table');
     const { report } = readRaw();
-    const g = report.stats.gorgotsias;
-    const m = report.stats.messer;
-    const expected = [
-      ['Encontradas en el PDF', g.found, m.found],
-      ['Listas para practicar', g.scorable, m.scorable],
-      ['Respuesta del PDF', g.answerFromPdf, m.answerFromPdf],
-      ['Propuestas por IA', g.aiProposedAnswers, m.aiProposedAnswers],
-      ['Con contradicciones', g.pending, m.pending],
-    ].map(([l, a, b]) => [l, String(a), String(b), String((a as number) + (b as number))]);
+    const docs = ['gorgotsias', 'messer', 'messerfull'] as const;
+    const pick = {
+      'Encontradas en el PDF': 'found',
+      'Listas para practicar': 'scorable',
+      'Respuesta del PDF': 'answerFromPdf',
+      'Propuestas por IA': 'aiProposedAnswers',
+      'Con contradicciones': 'pending',
+    } as const;
+    const expected = Object.entries(pick).map(([l, k]) => {
+      const vals = docs.map((d) => report.stats[d][k]);
+      return [l, ...vals.map(String), String(vals.reduce((a, b) => a + b, 0))];
+    });
     const rows = [...table.querySelectorAll('tbody tr')].map((tr) => [...tr.querySelectorAll('th,td')].map((c) => c.textContent));
     expect(rows).toEqual(expected);
+    const heads = [...table.querySelectorAll('thead th')].map((c) => c.textContent);
+    expect(heads).toEqual(['Dato', 'Gorgotsias', 'Messer (extracto)', 'Messer (libro completo)', 'Total']);
+    // fila de totales: 1440 encontradas, 1432 puntuables
+    expect(rows[0]![4]).toBe('1440');
+    expect(rows[1]![4]).toBe('1432');
   });
 });
 

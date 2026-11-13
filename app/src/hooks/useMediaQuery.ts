@@ -16,6 +16,11 @@ export function useMediaQuery(query: string): boolean {
 
 export const MQ = {
   mobile: '(max-width: 767px)',
+  narrow: '(max-width: 479px)',
+  /** < 400 px: rótulos cortos ("Ver completa", "Explicación (PDF)") con aria-label completo */
+  tiny: '(max-width: 399px)',
+  /** ≥ 700 px de alto (43,75em): el título de la lista se ve en el encabezado de práctica */
+  tall: '(min-height: 43.75em) and (min-width: 768px)',
   tablet: '(min-width: 768px) and (max-width: 1099px)',
   desktop: '(min-width: 1100px)',
   wide: '(min-width: 1280px)',

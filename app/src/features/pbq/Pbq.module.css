@@ -19,6 +19,12 @@
   font-weight: 600;
   text-decoration: none;
 }
+.title {
+  color: var(--text);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+  overflow-wrap: anywhere;
+}
 .pre {
   margin-top: var(--sp-3);
   white-space: pre-wrap;

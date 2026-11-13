@@ -29,6 +29,12 @@ function mobileTitle(path: string): string {
   return es.nav.home;
 }
 
+/** Pantallas de pregunta con marco ajustado (PLAN-LAYOUT 3): práctica de una pregunta, examen en curso, revisión y PBQ. */
+export function isQuestionScreen(path: string, search: string): boolean {
+  if (/^\/practica\/[^/]+$/.test(path)) return !new URLSearchParams(search).has('fin');
+  return path === '/examen/en-curso' || /^\/examen\/resultado\/[^/]+\/revision\/\d+$/.test(path) || /^\/pbq\/[^/]+$/.test(path);
+}
+
 /** Clave de "pantalla": cambiar de pregunta dentro de la misma pantalla no mueve el foco al h1. */
 function screenKey(path: string): string {
   return path.replace(/^\/practica\/[^/]+$/, '/practica/:q').replace(/\/revision\/\d+$/, '/revision/:n');
@@ -116,6 +122,7 @@ export function Layout() {
     <>
       <AppShell
         focusMode={focusMode}
+        questionScreen={state.status === 'ready' && booted && isQuestionScreen(loc.pathname, loc.search)}
         items={ITEMS}
         settingsItem={SETTINGS}
         resolvedTheme={resolved}

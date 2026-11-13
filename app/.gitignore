@@ -7,3 +7,9 @@ scripts/__pycache__
 data/_work
 
 .vercel
+
+# Variables de entorno locales (claves): nunca en el repo
+.env*
+!.env.example
+# Copia del banco para la función de análisis (la genera prepare-bank)
+server/_generated/*.js

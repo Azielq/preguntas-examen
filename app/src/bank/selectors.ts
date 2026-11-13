@@ -8,10 +8,23 @@ export function getAnswerState(q: Question): AnswerState {
   return 'unknown';
 }
 
-export const DOC_SHORT: Record<DocId, string> = { gorgotsias: 'Gorgotsias', messer: 'Messer' };
+export const DOC_SHORT: Record<DocId, string> = { gorgotsias: 'Gorgotsias', messer: 'Messer (extracto)', messerfull: 'Messer (libro completo)' };
 
 export function docShort(doc: string): string {
   return (DOC_SHORT as Record<string, string>)[doc] ?? doc;
+}
+
+/**
+ * Documentos cuyo `topic` no identifica la sección por sí solo ("Practice Exam A" está en el extracto y en el
+ * libro completo de Messer): sus rótulos llevan delante el nombre corto del documento.
+ */
+export function topicNeedsDoc(doc: string): boolean {
+  return doc === 'messer' || doc === 'messerfull';
+}
+
+/** "Chapter 1 · …" (literal) / "Messer (libro completo) · Practice Exam A" */
+export function sectionLabel(s: Pick<SectionInfo, 'doc' | 'topic'>): string {
+  return topicNeedsDoc(s.doc) ? `${docShort(s.doc)} · ${s.topic}` : s.topic;
 }
 
 function pageText(page: number, printed: number): string {
@@ -23,21 +36,53 @@ export function questionHeaderLabel(q: Question): string {
   return `${q.originalLabel} · ${pageText(q.page, q.printedPage)}`;
 }
 
-/** "Chapter 4 · Security Operations · Question 414 · pág. 541" */
+/** "Chapter 4 · Security Operations · Question 414 · pág. 541" / "Messer (libro completo) · Practice Exam A · A14 · …" */
 export function questionOriginLabel(q: Question): string {
-  return `${q.topic} · ${questionHeaderLabel(q)}`;
+  return `${sectionLabel(q)} · ${questionHeaderLabel(q)}`;
 }
 
-/** "Gorgotsias · pág. 51" / "Messer · clave rápida de respuestas · pág. PDF 17 (impresa 33)" */
+/**
+ * "Gorgotsias · pág. 51" / "Messer (extracto) · clave rápida de respuestas · pág. PDF 17 (impresa 33)" /
+ * "Messer (libro completo) · pág. PDF 60 (impresa 51) · clave rápida: pág. PDF 42 (impresa 33)"
+ */
 export function answerSourceLabel(s: AnswerSource): string {
   const parts = [docShort(s.doc)];
   if (s.kind === 'quick_key') parts.push('clave rápida de respuestas');
   parts.push(pageText(s.page, s.printedPage));
+  if (s.keyPage !== undefined) parts.push(`clave rápida: ${pageText(s.keyPage, s.keyPrintedPage ?? s.keyPage)}`);
   return parts.join(' · ');
 }
 
 export function duplicateLabel(q: Question): string {
-  return `${q.topic} · ${q.originalLabel}`;
+  return `${sectionLabel(q)} · ${q.originalLabel}`;
+}
+
+/** Objetivos SY0-701 presentes en el banco (solo messerfull), ordenados por código, con su título literal. */
+export function objectivesOf(questions: Question[]): { code: string; title: string; count: number }[] {
+  const m = new Map<string, { code: string; title: string; count: number }>();
+  for (const q of questions) {
+    const o = q.objective;
+    if (!o || !('code' in o)) continue;
+    const e = m.get(o.code);
+    if (e) e.count += 1;
+    else m.set(o.code, { code: o.code, title: o.title, count: 1 });
+  }
+  const num = (c: string) => c.split('.').map((x) => Number(x));
+  return [...m.values()].sort((a, b) => {
+    const [a1 = 0, a2 = 0] = num(a.code);
+    const [b1 = 0, b2 = 0] = num(b.code);
+    return a1 - b1 || a2 - b2;
+  });
+}
+
+/** Solo URL https: el enlace externo del objetivo nunca puede ser `javascript:` ni otro esquema. */
+export function safeExternalUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    return u.protocol === 'https:' ? u.href : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Otras copias de la misma unidad (en orden del banco). */
@@ -58,20 +103,22 @@ export function stemPreview(q: Question, max = 120): { text: string; truncated: 
   return { text: cut.trimEnd() + ' …', truncated: true };
 }
 
-export type SectionGroupKey = 'cap' | 'sim' | 'messer';
+export type SectionGroupKey = 'cap' | 'sim' | 'messer' | 'messerfull';
 export const SECTION_GROUP_LABEL: Record<SectionGroupKey, string> = {
   cap: 'Gorgotsias — Capítulos',
   sim: 'Gorgotsias — Simuladores',
-  messer: 'Messer',
+  messer: 'Messer (extracto)',
+  messerfull: 'Messer (libro completo)',
 };
 
 export function sectionGroupKey(s: Pick<SectionInfo, 'doc' | 'group'>): SectionGroupKey {
   if (s.doc === 'messer') return 'messer';
+  if (s.doc === 'messerfull') return 'messerfull';
   return s.group === 'sim' ? 'sim' : 'cap';
 }
 
 export function groupSections(sections: SectionInfo[]): { key: SectionGroupKey; label: string; sections: SectionInfo[] }[] {
-  const keys: SectionGroupKey[] = ['cap', 'sim', 'messer'];
+  const keys: SectionGroupKey[] = ['cap', 'sim', 'messer', 'messerfull'];
   return keys
     .map((key) => ({ key, label: SECTION_GROUP_LABEL[key], sections: sections.filter((s) => sectionGroupKey(s) === key) }))
     .filter((g) => g.sections.length > 0);

@@ -9,7 +9,7 @@ export function ShortcutsDialog({ open, onClose, singleKeyEnabled }: { open: boo
   return (
     <Dialog open={open} onClose={onClose} title={es.shortcuts.title}>
       {!singleKeyEnabled && <p className="notice warning">Los atajos de una sola tecla están desactivados en Ajustes.</p>}
-      <div className="table-wrap">
+      <div className="table-wrap" tabIndex={0} role="region" aria-label={es.shortcuts.title}>
         <table className="table">
           <caption className="sr-only">{es.shortcuts.title}</caption>
           <thead>

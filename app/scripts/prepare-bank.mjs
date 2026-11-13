@@ -27,15 +27,60 @@ export function splitBank(bank, importReport) {
     pbq: `pbq.${v}.json`,
     fragments: Object.fromEntries(Object.keys(fragments).map((s) => [s, `fragments/${s}.${v}.json`])),
   };
+  const pbqCounts = {};
+  for (const p of bank.pbq) pbqCounts[p.doc] = (pbqCounts[p.doc] ?? 0) + 1;
   const manifest = {
     bankVersion: v,
     generatedAt: bank.generatedAt,
     documents: bank.documents,
     sections: [...sectionsMap.values()],
     importReport,
+    pbqCounts,
     files,
   };
   return { manifest, core, explanations, fragments, pbq: bank.pbq };
+}
+
+/**
+ * Copia mínima del banco para la función de análisis (PLAN-IA 2.1). Sin fragmentos ni páginas.
+ * Solo selecciona campos: no modifica ningún string.
+ */
+export function bankLite(bank) {
+  return {
+    bankVersion: bank.bankVersion,
+    questions: bank.questions.map((q) => ({
+      id: q.id,
+      doc: q.doc,
+      group: q.group,
+      section: q.section,
+      topic: q.topic,
+      stem: q.stem,
+      options: q.options,
+      selectionType: q.selectionType,
+      correct: q.correct,
+      answerStatus: q.answerStatus,
+      review: { status: q.review.status },
+      scorable: q.scorable,
+      contentHash: q.contentHash,
+      duplicates: q.duplicates,
+      explanation: {
+        origin: q.explanation.origin,
+        language: q.explanation.language,
+        text: q.explanation.text,
+        perOption: q.explanation.perOption,
+      },
+    })),
+  };
+}
+
+/** Escribe server/_generated/bank-lite.js (módulo ES que la función importa de forma estática). */
+export function writeBankLite(bank, root = ROOT) {
+  const dir = join(root, 'server', '_generated');
+  mkdirSync(dir, { recursive: true });
+  const json = JSON.stringify(bankLite(bank));
+  const js = `// Generado por scripts/prepare-bank.mjs desde data/bank.json. No editar.\nexport default JSON.parse(${JSON.stringify(json)});\n`;
+  writeFileSync(join(dir, 'bank-lite.js'), js, 'utf8');
+  return join(dir, 'bank-lite.js');
 }
 
 /** Recompone el banco original a partir de las piezas (usado por el test de igualdad). */
@@ -94,7 +139,8 @@ export function prepare({ root = ROOT, quiet = false } = {}) {
       for (const f of readdirSync(join(pagesSrc, docDir))) copyFileSync(join(pagesSrc, docDir, f), join(out, 'pages', docDir, f));
     }
   }
-  if (!quiet) console.log(`prepare-bank: banco ${bank.bankVersion} → ${out} (${bank.questions.length} preguntas, ${bank.pbq.length} PBQ)`);
+  writeBankLite(bank, root);
+  if (!quiet) console.log(`prepare-bank: banco ${bank.bankVersion} → ${out} (${bank.questions.length} preguntas, ${bank.pbq.length} PBQ) + server/_generated/bank-lite.js`);
   return out;
 }
 

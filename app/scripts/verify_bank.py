@@ -22,7 +22,7 @@ def flat(x):
 
 
 docs = {}
-for did, pat in (("gorgotsias", "*gorgotsias*.pdf"), ("messer", "*messer*.pdf")):
+for did, pat in (("gorgotsias", "*gorgotsias*.pdf"), ("messer", "*scribd*messer*.pdf"), ("messerfull", "*OceanofPDF*Messer*.pdf")):
     pdf = glob.glob(os.path.join(ROOT, pat))[0]
     out = os.path.join(WORK, f"{did}.raw.txt")
     subprocess.run(["pdftotext", "-enc", "UTF-8", "-raw", pdf, out], check=True)
@@ -39,10 +39,10 @@ for did, pat in (("gorgotsias", "*gorgotsias*.pdf"), ("messer", "*messer*.pdf"))
         cleaned.append("\n".join(ls))
     docs[did] = flat("".join(cleaned))
     # para Messer, quitar la columna "Quick Answer / The Details" intercalada
-    if did == "messer":
+    if did.startswith("messer"):
         txt = "\n".join(cleaned)
         txt = re.sub(r"Quick\s*Answer:\s*\d+|The Details:\s*\d+", "", txt)
-        txt = re.sub(r"(?m)^\s*(\d+\s+)?Practice Exam A - Questions\s*\d*\s*$", "", txt)
+        txt = re.sub(r"(?m)^\s*(\d+\s+)?Practice Exam [ABC] - Questions\s*\d*\s*$", "", txt)
         docs[did] = flat(txt)
 
 fails = []

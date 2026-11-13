@@ -1,17 +1,16 @@
-import { Info, RotateCcw } from 'lucide-react';
-import { useRef, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useBank } from '../../bank/BankProvider';
 import { assetUrl } from '../../bank/loadBank';
-import { answerSourceLabel, getAnswerState, questionHeaderLabel } from '../../bank/selectors';
+import { answerSourceLabel, docShort, getAnswerState, questionHeaderLabel } from '../../bank/selectors';
 import type { Letter, Question } from '../../bank/types';
 import type { GradeResult } from '../../grading/grade';
 import { useMediaQuery, MQ } from '../../hooks/useMediaQuery';
-import { es } from '../../i18n/es';
 import { usePrefs } from '../../state/prefsStore';
 import { useProgress } from '../../state/progressStore';
 import { toast } from '../../state/toastStore';
 import { PdfFragmentModal } from '../../ui/PdfFragmentModal/PdfFragmentModal';
-import { QuestionCard } from '../../ui/QuestionCard/QuestionCard';
+import { QuestionCard, type QuestionCardProps } from '../../ui/QuestionCard/QuestionCard';
+import type { ActionBarSlots } from '../../ui/QuestionScreen/QuestionScreen';
 import { duplicatesInfo, lastTimeText } from '../practice/practiceUtils';
 import { useExplanation, useFragment } from './useQuestionContent';
 
@@ -30,6 +29,27 @@ export interface QuestionPanelProps {
   showLastTime?: boolean;
   feedbackExtra?: ReactNode;
   extraNotices?: ReactNode;
+  /** rótulo h2 (por defecto "Question 37 · pág. 122") */
+  headerLabel?: string;
+  headerTop?: ReactNode;
+  actions: ActionBarSlots;
+  aside?: ReactNode;
+  asideLabel?: string;
+  full: boolean;
+  onToggleFull(): void;
+  statusHint?: string;
+  statusHintId?: string;
+  listTitle?: string;
+  listTitleLang?: string;
+  planNote?: string;
+  explanationOpen: boolean;
+  onExplanationOpenChange(open: boolean): void;
+  detailOpen: boolean;
+  onDetailOpenChange(open: boolean): void;
+  onExplanationNext?(): void;
+  explanationNextLabel?: string;
+  analysisContent?: ReactNode;
+  onOpenShortcuts?(): void;
 }
 
 /** Conecta QuestionCard con el progreso (favorita, marca), explicaciones y fragmentos. */
@@ -41,61 +61,64 @@ export function QuestionPanel(p: QuestionPanelProps) {
   const toggleFlag = useProgress((s) => s.toggleFlag);
   const singleKey = usePrefs((s) => s.prefs.singleKeyShortcuts);
   const fine = useMediaQuery(MQ.finePointer);
-  const fragBtn = useRef<HTMLButtonElement>(null);
   const answerState = getAnswerState(q);
   const showExplanation = !!p.result || p.revealed;
+  // se pide en segundo plano al comprobar: la hoja abre con el contenido listo
   const expl = useExplanation(q, showExplanation);
   const frag = useFragment(q, p.fragmentOpen);
   const answered = !!p.result || p.revealed || p.mode === 'review';
+  const lastTime = p.showLastTime && !answered ? lastTimeText(prog) : null;
 
-  const notices: ReactNode[] = [];
-  if (prog?.contentChanged) {
-    notices.push(
-      <p key="changed" className="notice warning">
-        <RotateCcw size={18} aria-hidden="true" />
-        <span>{es.question.contentChanged}</span>
-      </p>,
-    );
-  }
-  const lt = p.showLastTime && !answered ? lastTimeText(prog) : null;
-  if (lt) {
-    notices.push(
-      <p key="last" className="chip" style={{ width: 'fit-content' }}>
-        <Info size={14} aria-hidden="true" />
-        {lt}
-      </p>,
-    );
-  }
-  if (p.extraNotices) notices.push(<div key="extra">{p.extraNotices}</div>);
+  const cardProps: QuestionCardProps = {
+    question: q,
+    mode: p.mode,
+    position: p.position,
+    headerLabel: p.headerLabel ?? questionHeaderLabel(q),
+    selected: p.selected,
+    onSelect: p.onSelect,
+    result: p.result,
+    correctLetters: p.correctLetters,
+    answerState,
+    revealUnreliable: p.revealed,
+    explanation: showExplanation ? expl.value : undefined,
+    explanationSourceLabel: answerSourceLabel(q.answerSource),
+    onRetryExplanation: expl.retry,
+    flags: { favorite: !!prog?.favorite, flagged: !!prog?.flagged },
+    onToggleFavorite: () => toast(toggleFavorite(q) ? 'Agregada a favoritas' : 'Quitada de favoritas'),
+    onToggleFlag: () => toast(toggleFlag(q) ? 'Marcada para repasar' : 'Marca de repaso quitada'),
+    onOpenFragment: () => p.onFragmentOpenChange(true),
+    duplicatesInfo: duplicatesInfo(q, bank),
+    notes: q.review.notes,
+    notices: p.extraNotices,
+    feedbackExtra: p.feedbackExtra,
+    onPositionClick: p.onPositionClick,
+    showShortcutHints: singleKey && fine && !answered,
+    headerTop: p.headerTop,
+    actions: p.actions,
+    aside: p.aside,
+    asideLabel: p.asideLabel,
+    full: p.full,
+    onToggleFull: p.onToggleFull,
+    statusHint: p.statusHint,
+    statusHintId: p.statusHintId,
+    lastTime,
+    listTitle: p.listTitle,
+    listTitleLang: p.listTitleLang,
+    contentChanged: !!prog?.contentChanged,
+    planNote: p.planNote,
+    explanationOpen: p.explanationOpen,
+    onExplanationOpenChange: p.onExplanationOpenChange,
+    detailOpen: p.detailOpen,
+    onDetailOpenChange: p.onDetailOpenChange,
+    onExplanationNext: p.onExplanationNext,
+    explanationNextLabel: p.explanationNextLabel,
+    analysisContent: p.analysisContent,
+    onOpenShortcuts: p.onOpenShortcuts,
+  };
 
   return (
     <>
-      <QuestionCard
-        ref={fragBtn}
-        question={q}
-        mode={p.mode}
-        position={p.position}
-        headerLabel={questionHeaderLabel(q)}
-        selected={p.selected}
-        onSelect={p.onSelect}
-        result={p.result}
-        correctLetters={p.correctLetters}
-        answerState={answerState}
-        revealUnreliable={p.revealed}
-        explanation={showExplanation ? expl.value : undefined}
-        explanationSourceLabel={answerSourceLabel(q.answerSource)}
-        onRetryExplanation={expl.retry}
-        flags={{ favorite: !!prog?.favorite, flagged: !!prog?.flagged }}
-        onToggleFavorite={() => toast(toggleFavorite(q) ? 'Agregada a favoritas' : 'Quitada de favoritas')}
-        onToggleFlag={() => toast(toggleFlag(q) ? 'Marcada para repasar' : 'Marca de repaso quitada')}
-        onOpenFragment={() => p.onFragmentOpenChange(true)}
-        duplicatesInfo={duplicatesInfo(q, bank)}
-        notes={q.review.notes}
-        notices={notices.length > 0 ? <div className="stack-sm">{notices}</div> : undefined}
-        feedbackExtra={p.feedbackExtra}
-        onPositionClick={p.onPositionClick}
-        showShortcutHints={singleKey && fine && !answered}
-      />
+      <QuestionCard {...cardProps} />
       <PdfFragmentModal
         open={p.fragmentOpen}
         onClose={() => p.onFragmentOpenChange(false)}
@@ -104,6 +127,7 @@ export function QuestionPanel(p: QuestionPanelProps) {
         allowAnswer={answered}
         onRetry={frag.retry}
         resolveImage={assetUrl}
+        docLabel={docShort(q.doc)}
       />
     </>
   );

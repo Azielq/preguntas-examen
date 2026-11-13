@@ -74,3 +74,9 @@
     padding: var(--sp-1) var(--sp-4);
   }
 }
+
+.actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-3);
+}

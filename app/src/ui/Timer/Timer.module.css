@@ -51,3 +51,14 @@
   color: var(--warning);
   font-weight: 600;
 }
+
+/* con < 480 px "Ocultar" queda solo con icono (aria-label) */
+@media (max-width: 479px) {
+  .toggleText {
+    display: none;
+  }
+  .toggle {
+    min-width: 44px;
+    justify-content: center;
+  }
+}

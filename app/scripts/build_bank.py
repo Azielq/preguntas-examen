@@ -24,7 +24,8 @@ WORK = os.path.join(DATA, "_work")
 os.makedirs(WORK, exist_ok=True)
 
 gor_pdf = glob.glob(os.path.join(ROOT, "*gorgotsias*.pdf"))[0]
-msr_pdf = glob.glob(os.path.join(ROOT, "*messer*.pdf"))[0]
+msr_pdf = glob.glob(os.path.join(ROOT, "*scribd*messer*.pdf"))[0]  # extracto de 25 págs. (Practice Exam A)
+msf_pdf = glob.glob(os.path.join(ROOT, "*OceanofPDF*Messer*.pdf"))[0]  # libro completo (3 exámenes)
 
 
 def sh(*args):
@@ -35,6 +36,10 @@ sh("pdftotext", "-enc", "UTF-8", "-layout", gor_pdf, os.path.join(WORK, "gor.txt
 sh("pdftotext", "-enc", "UTF-8", "-layout", msr_pdf, os.path.join(WORK, "msr.txt"))
 sh(sys.executable, "-I", os.path.join(HERE, "parse_gorgotsias.py"), os.path.join(WORK, "gor.txt"), os.path.join(WORK, "gor.json"))
 sh(sys.executable, "-I", os.path.join(HERE, "parse_messer.py"), os.path.join(WORK, "msr.txt"), os.path.join(WORK, "msr.json"))
+
+sh("pdftotext", "-enc", "UTF-8", "-layout", msf_pdf, os.path.join(WORK, "msr2.txt"))
+sh(sys.executable, "-I", "-X", "utf8", os.path.join(HERE, "parse_messer_full.py"), os.path.join(WORK, "msr2.txt"), os.path.join(WORK, "msf.json"))
+msf = json.load(open(os.path.join(WORK, "msf.json"), encoding="utf8"))
 
 gor = json.load(open(os.path.join(WORK, "gor.json"), encoding="utf8"))
 msr = json.load(open(os.path.join(WORK, "msr.json"), encoding="utf8"))
@@ -202,6 +207,101 @@ for r in msr["questions"]:
         }
     )
 
+# Messer (libro completo, v1.6): 3 exámenes × 85 preguntas de opción + 5 PBQ cada uno
+MSF_ID = "messerfull"
+MSF_KEY_PAGES = {"A": 42, "B": 170, "C": 298}
+os.makedirs(os.path.join(DATA, "pages", MSF_ID), exist_ok=True)
+
+
+def render_msf_page(p):
+    out = os.path.join(DATA, "pages", MSF_ID, f"p-{p:03d}")
+    if not os.path.exists(out + ".jpg"):
+        sh("pdftoppm", "-r", "150", "-jpeg", "-jpegopt", "quality=80", "-f", str(p), "-l", str(p), "-singlefile", msf_pdf, out)
+    return f"pages/{MSF_ID}/p-{p:03d}.jpg"
+
+
+for r in msf["questions"]:
+    ex = r["exam"]
+    qid = f"msf-{ex.lower()}{r['number']:03d}"
+    ans = r["ans"]
+    letters = r["key"] or []
+    reasons, notes = [], []
+    if not letters:
+        reasons.append("Sin respuesta en la clave rápida del PDF.")
+    if ans["letters"] != letters:
+        reasons.append(
+            f"Contradicción en el PDF: la clave rápida (pág. {MSF_KEY_PAGES[ex] - 9}) indica {'+'.join(letters)} y la respuesta detallada (pág. {r['answer_printedPage']}) indica {'+'.join(ans['letters']) or 'otra cosa'}. No se resolvió automáticamente."
+        )
+    if ans.get("answer_text_variant"):
+        notes.append(f"La línea «The Answer:» (pág. {r['answer_printedPage']}) redacta la opción correcta con otras palabras que la opción de la pregunta; la letra coincide con la clave rápida.")
+    if r.get("repeat_matches") is False:
+        notes.append(f"La copia de la pregunta en las respuestas detalladas (pág. {r['answer_printedPage']}) difiere del enunciado u opciones de la pág. {r['printedPage']} (variación del propio PDF); se conserva el texto de la sección de preguntas.")
+    per = {L: (v["text"] or v["title"]) for L, v in ans["per"].items()}
+    label = f"{ex}{r['number']}"
+    questions.append(
+        {
+            "id": qid,
+            "doc": MSF_ID,
+            "group": "pe-" + ex.lower(),
+            "section": "mf-" + ex.lower(),
+            "topic": f"Practice Exam {ex}",
+            "number": r["number"],
+            "originalLabel": label,
+            "page": r["page"],
+            "printedPage": r["printedPage"],
+            "stem": r["stem"],
+            "options": [{"id": f"{qid}-{o['letter']}", "letter": o["letter"], "text": o["text"]} for o in r["options"]],
+            "selectionType": "multiple" if len(letters) > 1 else "single",
+            "correct": letters,
+            "answerStatus": "pdf" if not reasons else "pending",
+            "answerSource": {
+                "doc": MSF_ID,
+                "page": r["answer_page"],
+                "printedPage": r["answer_printedPage"],
+                "kind": "explanation",
+                "keyPage": MSF_KEY_PAGES[ex],
+                "keyPrintedPage": MSF_KEY_PAGES[ex] - 9,
+            },
+            "objective": ans["objective"],
+            "explanation": {"origin": "pdf", "language": "en", "text": ans["main"], "perOption": per},
+            "review": {"status": "ok" if not reasons else "pending", "reasons": reasons, "notes": notes},
+            "fragment": {
+                "questionPage": r["page"],
+                "question": f"{label}. " + r["fragment_q"],
+                "answerPage": r["answer_page"],
+                "answer": f"{label}. " + ans["raw"],
+            },
+            "duplicates": [],
+            "similar": [],
+        }
+    )
+
+msf_pbqs = []
+for r in msf["pbq"]:
+    ex, n = r["exam"], r["number"]
+    qp, ap = r["question_pages"], r["answer_pages"]
+    qi = [render_msf_page(p) for p in qp]
+    ai = [render_msf_page(p) for p in ap]
+    msf_pbqs.append(
+        {
+            "id": f"msf-pbq-{ex.lower()}{n}",
+            "doc": MSF_ID,
+            "originalLabel": f"{ex}{n}",
+            "kind": "pbq-solution",
+            "title": r["title"],
+            "pages": qp + ap,
+            "printedPages": r["printed_question"] + r["printed_answer"],
+            "questionPages": qp,
+            "answerPages": ap,
+            "images": qi + ai,
+            "questionImages": qi,
+            "answerImages": ai,
+            "text": r["question_text"] + "\n\n" + r["answer_text"],
+            "note": "Enunciado y solución detallada del PDF (imágenes de página). Es una pregunta interactiva de arrastrar/emparejar o completar tablas; no se puntúa.",
+            "scorable": False,
+        }
+    )
+
 # ---- duplicados / similares ---------------------------------------------------------------
 def qtext(q):
     return " ".join(b["text"] for b in q["stem"])
@@ -292,6 +392,8 @@ for label, pgs, title in pbq_defs:
         }
     )
 
+pbqs.extend(msf_pbqs)
+
 # ---- salida ---------------------------------------------------------------------------------
 version = hashlib.sha1("".join(q["contentHash"] + q["id"] for q in questions).encode()).hexdigest()[:10]
 bank = {
@@ -300,6 +402,7 @@ bank = {
     "documents": [
         {"id": "gorgotsias", "title": "CompTIA Security+ SY0-701 Practice Tests & PBQs (Nikolaos Gorgotsias / ExamsDigest)", "file": os.path.basename(gor_pdf), "pages": 1620},
         {"id": "messer", "title": "Professor Messer SY0-701 Practice Exams v18 (extracto: Practice Exam A)", "file": os.path.basename(msr_pdf), "pages": 25},
+        {"id": "messerfull", "title": "Professor Messer's SY0-701 Security+ Practice Exams (libro completo v1.6: exámenes A, B y C)", "file": os.path.basename(msf_pdf), "pages": 393},
     ],
     "questions": questions,
     "pbq": pbqs,
@@ -307,7 +410,7 @@ bank = {
 json.dump(bank, open(os.path.join(DATA, "bank.json"), "w", encoding="utf8"), ensure_ascii=False, indent=1)
 
 stats = {}
-for d in ("gorgotsias", "messer"):
+for d in ("gorgotsias", "messer", "messerfull"):
     qs = [q for q in questions if q["doc"] == d]
     stats[d] = {
         "found": len(qs),

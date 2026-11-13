@@ -1,3 +1,4 @@
+/* PLAN-LAYOUT 9.1: cabecera y pie fijos, solo el cuerpo se desplaza; dvh con respaldo en vh. */
 .dialog {
   border: 1px solid var(--border);
   border-radius: var(--r-xl);
@@ -6,7 +7,8 @@
   box-shadow: var(--shadow-3);
   padding: 0;
   width: min(560px, calc(100vw - 32px));
-  max-height: 90vh;
+  max-height: min(90vh, calc(100vh - 32px));
+  max-height: min(90dvh, calc(100dvh - 32px));
   overflow: hidden;
 }
 .dialog[open] {
@@ -28,6 +30,16 @@
     transform: none;
   }
 }
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .dialog[open] {
     animation: fade-in 0.01ms;
@@ -37,12 +49,14 @@
   width: min(880px, calc(100vw - 32px));
 }
 .head {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-3);
-  padding: var(--sp-4) var(--sp-4) var(--sp-3) var(--sp-6);
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-6);
   border-bottom: 1px solid var(--border);
+  background: var(--surface);
 }
 .title {
   font-size: var(--fs-h3);
@@ -51,53 +65,139 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.title:focus {
+  outline: none;
+}
+.title:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.sub {
+  flex: none;
+  padding: var(--sp-3) var(--sp-6);
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
 .body {
+  flex: 1 1 auto;
   padding: var(--sp-5) var(--sp-6);
   overflow: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
   min-height: 0;
+  overflow-wrap: anywhere;
 }
 .actions {
+  flex: none;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--sp-3);
-  padding: var(--sp-4) var(--sp-6);
+  padding: var(--sp-3) var(--sp-6);
   border-top: 1px solid var(--border);
+  background: var(--surface);
 }
+/* Panel lateral (navegador) */
 .side {
   margin: 0 0 0 auto;
   height: 100vh;
+  height: 100dvh;
   max-height: 100vh;
+  max-height: 100dvh;
   width: min(380px, 100vw);
   border-radius: var(--r-xl) 0 0 var(--r-xl);
 }
-@media (max-width: 767px) {
-  .lg,
-  .full {
-    width: 100vw;
-    max-width: 100vw;
-    height: 100%;
-    max-height: 100%;
-    margin: 0;
-    border-radius: 0;
+.side[open],
+.reading[open],
+.full[open],
+.sheet[open] {
+  animation-name: sheet-in;
+}
+/* Hoja de lectura (explicación, detalle, análisis): a la derecha con ≥ 1100 px para que la pregunta siga a la vista */
+.reading {
+  width: min(880px, calc(100vw - 32px));
+}
+@media (min-width: 1100px) {
+  .reading {
+    margin: 0 0 0 auto;
+    width: min(520px, 45vw);
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    border-radius: var(--r-xl) 0 0 var(--r-xl);
   }
+  .reading::backdrop {
+    background: var(--overlay-soft);
+  }
+}
+/* Pantalla completa: móvil y toda ventana de poca altura */
+@media (max-width: 767px), (max-height: 29.99em) {
+  .lg,
+  .full,
+  .reading,
+  .side,
   .sheet {
     width: 100vw;
     max-width: 100vw;
-    margin: auto 0 0 0;
-    border-radius: var(--r-xl) var(--r-xl) 0 0;
-    max-height: 85vh;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    margin: 0;
+    border-radius: 0;
+    border: 0;
+  }
+  .lg .head,
+  .full .head,
+  .reading .head,
+  .side .head,
+  .sheet .head {
+    padding-top: max(var(--sp-3), var(--safe-top));
+    padding-left: max(var(--sp-4), var(--safe-left));
+    padding-right: max(var(--sp-3), var(--safe-right));
+  }
+  .lg .actions,
+  .full .actions,
+  .reading .actions,
+  .side .actions,
+  .sheet .actions {
+    padding-bottom: max(var(--sp-3), var(--safe-bottom));
+    padding-left: max(var(--sp-4), var(--safe-left));
+    padding-right: max(var(--sp-4), var(--safe-right));
+  }
+  .body,
+  .sub {
+    padding-left: max(var(--sp-4), var(--safe-left));
+    padding-right: max(var(--sp-4), var(--safe-right));
   }
   .body {
-    padding: var(--sp-4);
+    padding-top: var(--sp-4);
+    padding-bottom: var(--sp-4);
   }
+}
+@media (max-width: 767px) {
   .head {
     padding-left: var(--sp-4);
   }
   .actions {
     padding: var(--sp-3) var(--sp-4);
+  }
+}
+/* Ventana muy baja (zoom 300–400 %): el diálogo entero se desplaza; Cerrar queda pegado arriba */
+@media (max-height: 19.99em) {
+  .dialog[open] {
+    display: block;
+    overflow: auto;
+  }
+  .head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .body {
+    overflow: visible;
   }
 }

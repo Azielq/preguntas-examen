@@ -39,3 +39,7 @@
     width: 100%;
   }
 }
+
+.compact {
+  display: inline-flex;
+}

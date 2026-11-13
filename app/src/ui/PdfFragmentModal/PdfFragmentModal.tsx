@@ -13,6 +13,7 @@ function pageLabel(page: number, printed: number) {
   return page === printed ? `pág. ${page}` : `pág. PDF ${page}`;
 }
 
+/** Fragmento del PDF (PLAN-LAYOUT 11.3): pestañas en la subcabecera fija, "Copiar texto" en el pie, un solo scroll. */
 export function PdfFragmentModal({
   open,
   onClose,
@@ -21,6 +22,7 @@ export function PdfFragmentModal({
   allowAnswer,
   onRetry,
   resolveImage,
+  docLabel,
 }: {
   open: boolean;
   onClose(): void;
@@ -29,6 +31,8 @@ export function PdfFragmentModal({
   allowAnswer: boolean;
   onRetry(): void;
   resolveImage(path: string): string;
+  /** nombre corto del documento ("Messer (extracto)") para el texto alternativo */
+  docLabel?: string;
 }) {
   const [tab, setTab] = useState<'q' | 'a'>('q');
   const [copied, setCopied] = useState('');
@@ -60,6 +64,8 @@ export function PdfFragmentModal({
   };
 
   let body: React.ReactNode;
+  let text: string | null = null;
+  const isImage = typeof fragment === 'object' && isImageFragment(fragment);
   if (fragment === 'loading') {
     body = (
       <LoadingRegion>
@@ -83,13 +89,14 @@ export function PdfFragmentModal({
     body = (
       <ImageViewer
         key={img}
+        fill
         src={resolveImage(img)}
-        alt={`Página ${page} del PDF de Messer: ${isQ ? `contiene la pregunta ${q.originalLabel}` : `clave de respuestas que incluye la ${q.originalLabel}`}`}
+        alt={`Página ${page} del PDF${docLabel ? ` de ${docLabel}` : ''}: ${isQ ? `contiene la pregunta ${q.originalLabel}` : `clave de respuestas que incluye la ${q.originalLabel}`}`}
         caption={`Página ${page} del PDF (impresa ${printed}). La página contiene varias preguntas: buscá la ${q.originalLabel}.`}
       />
     );
   } else {
-    const text = tab === 'q' ? fragment.question : fragment.answer;
+    text = tab === 'q' ? fragment.question : fragment.answer;
     body = (
       <div className="stack">
         <p className="notice info">
@@ -99,21 +106,32 @@ export function PdfFragmentModal({
         <pre lang="en" className={s.pre} tabIndex={0}>
           {text}
         </pre>
-        <div className="row">
-          <Button icon={<Copy size={16} aria-hidden="true" />} onClick={() => copy(text)}>
-            {es.fragment.copy}
-          </Button>
-          <span aria-live="polite" className="small muted">
-            {copied}
-          </span>
-        </div>
       </div>
     );
   }
 
   return (
-    <Dialog open={open} onClose={onClose} title={es.fragment.title(q.originalLabel)} size="lg">
-      <Tabs tabs={tabs} value={tab} onChange={(id) => setTab(id as 'q' | 'a')} idPrefix={prefix} label="Página del fragmento" />
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title={es.fragment.title(q.originalLabel)}
+      size="lg"
+      sheet="fragment"
+      className={isImage ? s.imageDialog : undefined}
+      subheader={<Tabs tabs={tabs} value={tab} onChange={(id) => setTab(id as 'q' | 'a')} idPrefix={prefix} label="Página del fragmento" />}
+      actions={
+        text !== null ? (
+          <div className={s.copyRow}>
+            <span aria-live="polite" className="small muted">
+              {copied}
+            </span>
+            <Button icon={<Copy size={16} aria-hidden="true" />} onClick={() => copy(text!)}>
+              {es.fragment.copy}
+            </Button>
+          </div>
+        ) : undefined
+      }
+    >
       <TabPanel idPrefix={prefix} id={tab}>
         {body}
       </TabPanel>

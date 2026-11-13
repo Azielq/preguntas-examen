@@ -1,5 +1,5 @@
 {
- "bankVersion": "3efc5f1a3b",
+ "bankVersion": "758483f7ae",
  "stats": {
   "gorgotsias": {
    "found": 1140,
@@ -38,9 +38,25 @@
    "bySection": {
     "pe-a": 45
    }
+  },
+  "messerfull": {
+   "found": 255,
+   "answerFromPdf": 255,
+   "aiProposedAnswers": 0,
+   "pending": 0,
+   "scorable": 255,
+   "multiple": 9,
+   "explanationFromPdf": 255,
+   "explanationAi": 0,
+   "withNotes": 10,
+   "bySection": {
+    "mf-a": 85,
+    "mf-b": 85,
+    "mf-c": 85
+   }
   }
  },
- "pbqSolutions": 5,
+ "pbqSolutions": 20,
  "pending": [
   {
    "id": "gor-cap1-0023",
@@ -174,10 +190,70 @@
    "notes": [
     "La explicación está numerada con otro número en el PDF; se vinculó por posición y el contenido concuerda con la pregunta."
    ]
+  },
+  {
+   "id": "msf-a012",
+   "notes": [
+    "La línea «The Answer:» (pág. 49) redacta la opción correcta con otras palabras que la opción de la pregunta; la letra coincide con la clave rápida."
+   ]
+  },
+  {
+   "id": "msf-b027",
+   "notes": [
+    "La copia de la pregunta en las respuestas detalladas (pág. 189) difiere del enunciado u opciones de la pág. 141 (variación del propio PDF); se conserva el texto de la sección de preguntas."
+   ]
+  },
+  {
+   "id": "msf-b055",
+   "notes": [
+    "La copia de la pregunta en las respuestas detalladas (pág. 218) difiere del enunciado u opciones de la pág. 149 (variación del propio PDF); se conserva el texto de la sección de preguntas."
+   ]
+  },
+  {
+   "id": "msf-b078",
+   "notes": [
+    "La copia de la pregunta en las respuestas detalladas (pág. 242) difiere del enunciado u opciones de la pág. 155 (variación del propio PDF); se conserva el texto de la sección de preguntas."
+   ]
+  },
+  {
+   "id": "msf-b083",
+   "notes": [
+    "La copia de la pregunta en las respuestas detalladas (pág. 247) difiere del enunciado u opciones de la pág. 157 (variación del propio PDF); se conserva el texto de la sección de preguntas."
+   ]
+  },
+  {
+   "id": "msf-c016",
+   "notes": [
+    "La copia de la pregunta en las respuestas detalladas (pág. 307) difiere del enunciado u opciones de la pág. 264 (variación del propio PDF); se conserva el texto de la sección de preguntas."
+   ]
+  },
+  {
+   "id": "msf-c020",
+   "notes": [
+    "La copia de la pregunta en las respuestas detalladas (pág. 311) difiere del enunciado u opciones de la pág. 265 (variación del propio PDF); se conserva el texto de la sección de preguntas."
+   ]
+  },
+  {
+   "id": "msf-c027",
+   "notes": [
+    "La copia de la pregunta en las respuestas detalladas (pág. 318) difiere del enunciado u opciones de la pág. 267 (variación del propio PDF); se conserva el texto de la sección de preguntas."
+   ]
+  },
+  {
+   "id": "msf-c048",
+   "notes": [
+    "La copia de la pregunta en las respuestas detalladas (pág. 339) difiere del enunciado u opciones de la pág. 273 (variación del propio PDF); se conserva el texto de la sección de preguntas."
+   ]
+  },
+  {
+   "id": "msf-c054",
+   "notes": [
+    "La copia de la pregunta en las respuestas detalladas (pág. 345) difiere del enunciado u opciones de la pág. 275 (variación del propio PDF); se conserva el texto de la sección de preguntas."
+   ]
   }
  ],
- "identicalDuplicateGroups": 534,
- "questionsInIdenticalDuplicateGroups": 1133,
+ "identicalDuplicateGroups": 579,
+ "questionsInIdenticalDuplicateGroups": 1223,
  "duplicateAnswerConflicts": [
   [
    "gor-cap4-0414",

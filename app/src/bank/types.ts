@@ -1,5 +1,7 @@
-export type DocId = 'gorgotsias' | 'messer';
-export type Letter = string; // 'A'…'E'; no asumir 4
+export type DocId = 'gorgotsias' | 'messer' | 'messerfull';
+/** Orden de presentación de los documentos (el del banco). */
+export const DOC_IDS: readonly DocId[] = ['gorgotsias', 'messer', 'messerfull'];
+export type Letter = string; // 'A'…'G'; no asumir 4
 export type AnswerStatus = 'pdf' | 'ai_proposed' | 'pending';
 
 export interface BankDocument {
@@ -21,6 +23,19 @@ export interface AnswerSource {
   page: number;
   printedPage: number;
   kind: 'explanation' | 'quick_key';
+  /** messerfull: página de la clave rápida (además de la respuesta detallada) */
+  keyPage?: number;
+  keyPrintedPage?: number;
+}
+
+/**
+ * Objetivo SY0-701 citado por el PDF ("More information: SY0-701, Objective X.Y - …"); solo messerfull.
+ * Cuando la extracción no pudo separar sus partes queda solo `raw` (texto literal de esa línea).
+ */
+export type Objective = { code: string; title: string; url: string } | { raw: string };
+
+export function objectiveCode(o: Objective | undefined): string | null {
+  return o && 'code' in o ? o.code : null;
 }
 export interface Explanation {
   origin: 'pdf' | 'ai';
@@ -64,6 +79,7 @@ export interface Question {
   similar: string[];
   scorable: boolean;
   contentHash: string;
+  objective?: Objective;
 }
 
 export interface PbqSolution {
@@ -75,6 +91,11 @@ export interface PbqSolution {
   pages: number[];
   printedPages: number[];
   images: string[];
+  /** messerfull: páginas del enunciado y de la solución por separado */
+  questionPages?: number[];
+  answerPages?: number[];
+  questionImages?: string[];
+  answerImages?: string[];
   text: string;
   note: string;
   scorable: false;
@@ -120,7 +141,9 @@ export interface Manifest {
   documents: BankDocument[];
   sections: SectionInfo[];
   importReport: ImportReport;
-  files: { core: string; explanations: string; pbq: string; fragments: Record<string, string> };
+  /** soluciones PBQ por documento (contadas por prepare-bank desde bank.pbq) */
+  pbqCounts?: Partial<Record<DocId, number>>;
+  files:{ core: string; explanations: string; pbq: string; fragments: Record<string, string> };
 }
 
 /** Componente conexo de duplicados. `id` = primer miembro en orden del banco. */

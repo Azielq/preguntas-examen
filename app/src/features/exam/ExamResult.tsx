@@ -2,7 +2,7 @@ import { CircleCheck, CircleDashed, CircleX, History, ListChecks, Play, RotateCc
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useBank } from '../../bank/BankProvider';
-import { stemPreview } from '../../bank/selectors';
+import { sectionLabel, stemPreview } from '../../bank/selectors';
 import { formatDate } from '../../i18n/es';
 import { useExam } from '../../state/examStore';
 import { ButtonLink } from '../../ui/Button/Button';
@@ -11,8 +11,9 @@ import { ResultSummary } from '../../ui/ResultSummary/ResultSummary';
 import { NotFound } from '../app/NotFound';
 import { PageHeader } from '../app/PageHeader';
 import { practiceUrl } from '../practice/filterQuery';
+import { AiAnalysisEntry } from './AiAnalysisEntry';
 import s from './Exam.module.css';
-import { sourceLabel } from './ExamSetup';
+import { configSourceLabel } from './ExamSetup';
 
 type ListFilter = 'all' | 'incorrect' | 'omitted' | 'flagged';
 
@@ -49,7 +50,7 @@ export function ExamResult() {
   attempt.items.forEach((it) => {
     const q = bank.indexes.byId.get(it.questionId);
     const key = q?.section ?? '—';
-    const label = q?.topic ?? 'Pregunta que ya no existe en el banco';
+    const label = q ? sectionLabel(q) : 'Pregunta que ya no existe en el banco';
     const e = sections.get(key) ?? { label, correct: 0, total: 0 };
     e.total += 1;
     if (it.result === 'correct') e.correct += 1;
@@ -65,7 +66,7 @@ export function ExamResult() {
     <div className="page">
       <PageHeader title="Resultado del examen" docTitle="Resultado del examen">
         <p className={s.meta}>
-          {formatDate(attempt.finishedAt)} · {sourceLabel(attempt.config.source)}
+          {formatDate(attempt.finishedAt)} · {configSourceLabel(attempt.config)}
           {attempt.config.sections && attempt.config.sections.length > 0 && ` · ${attempt.config.sections.length} secciones`}
           {oldBank && (
             <>
@@ -86,6 +87,7 @@ export function ExamResult() {
       <ResultSummary
         attempt={{ totals: attempt.totals, elapsedMs: attempt.elapsedMs, timerMinutes: attempt.config.timerMinutes, notScoredCount: attempt.notScored?.length ?? 0 }}
       />
+      <AiAnalysisEntry attempt={attempt} bank={bank} />
 
       {sections.size > 1 && (
         <section className="section" aria-labelledby="res-sec">

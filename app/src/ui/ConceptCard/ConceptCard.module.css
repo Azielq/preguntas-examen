@@ -1,0 +1,118 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+  min-width: 0;
+}
+.h {
+  font-size: inherit;
+  line-height: inherit;
+}
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--sp-4);
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: var(--r-lg);
+  color: var(--text);
+  cursor: pointer;
+}
+.toggle:hover {
+  background: var(--surface-2);
+}
+.chev {
+  flex: none;
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+.titleWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+.name {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  align-items: center;
+}
+.sub {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4) var(--sp-4);
+  border-top: 1px solid var(--border);
+  padding-top: var(--sp-4);
+  min-width: 0;
+}
+.panel[hidden] {
+  display: none;
+}
+.computed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.h4 {
+  font-size: var(--fs-body);
+  font-weight: 650;
+}
+.points {
+  margin: 0;
+  padding-left: var(--sp-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+.point {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 72ch;
+}
+.example {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 72ch;
+}
+.evidence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.practice {
+  display: flex;
+  justify-content: flex-end;
+}
+@media (max-width: 767px) {
+  .toggle {
+    padding: var(--sp-3);
+  }
+  .panel {
+    padding: var(--sp-3);
+  }
+  .practice > * {
+    width: 100%;
+  }
+}

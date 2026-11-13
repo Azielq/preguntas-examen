@@ -1,6 +1,7 @@
 .shell {
   --side: var(--sidebar-w);
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   grid-template-columns: var(--side) minmax(0, 1fr);
   /* la columna lateral se pinta de superficie en toda la altura */
@@ -55,9 +56,60 @@
     background: none;
   }
   .container {
-    padding: var(--sp-4) var(--sp-4) calc(var(--bottomnav-h) + var(--sp-6) + env(safe-area-inset-bottom));
+    padding: var(--sp-4) max(var(--sp-4), var(--safe-right)) calc(var(--bottomnav-h) + var(--sp-6) + var(--safe-bottom)) max(var(--sp-4), var(--safe-left));
   }
-  .focus .container {
-    padding-bottom: calc(var(--actionbar-h) + var(--sp-6) + env(safe-area-inset-bottom));
+}
+
+/* ---- Pantallas de pregunta (PLAN-LAYOUT 4.2) ---- */
+.qscreen .container {
+  max-width: 1200px;
+}
+@media (max-width: 767px) {
+  /* sin BottomNav: no hace falta reservar su alto */
+  .qscreen .container {
+    padding-top: 0;
+    padding-bottom: 0;
   }
+}
+/* fit / fit-wide: la app ocupa exactamente la ventana y la página no se desplaza */
+:global(:root[data-qlayout^='fit']) .qscreen {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  grid-template-rows: minmax(0, 1fr);
+}
+:global(:root[data-qlayout^='fit']) .qscreen .main {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+:global(:root[data-qlayout^='fit']) .qscreen .container {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: max(var(--sp-8), var(--safe-left));
+  padding-right: max(var(--sp-8), var(--safe-right));
+}
+@media (max-width: 1099px) {
+  :global(:root[data-qlayout^='fit']) .qscreen .container {
+    padding-left: max(var(--sp-6), var(--safe-left));
+    padding-right: max(var(--sp-6), var(--safe-right));
+  }
+}
+@media (max-width: 767px) {
+  :global(:root[data-qlayout^='fit']) .qscreen .container {
+    padding-left: max(var(--sp-4), var(--safe-left));
+    padding-right: max(var(--sp-4), var(--safe-right));
+  }
+}
+:global(:root[data-qlayout='fit-wide']) .qscreen .container {
+  padding-left: max(var(--sp-4), var(--safe-left));
+  padding-right: max(var(--sp-4), var(--safe-right));
 }

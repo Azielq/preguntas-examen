@@ -1,4 +1,4 @@
-import type { Question, Unit } from '../bank/types';
+import type { DocId, Question, Unit } from '../bank/types';
 import { isScorable } from './grade';
 import type { ExamConfig, ExamItem } from './types';
 
@@ -18,12 +18,20 @@ export function seededRng(seed: number): Rng {
 
 export interface ExamScope {
   source: ExamConfig['source'];
+  docs?: DocId[];
   sections?: string[];
   includeAiProposed: boolean;
 }
 
+/** Documentos del alcance; `null` = todos. */
+export function scopeDocs(scope: Pick<ExamScope, 'source' | 'docs'>): DocId[] | null {
+  if (scope.source !== 'both') return [scope.source];
+  return scope.docs && scope.docs.length > 0 ? scope.docs : null;
+}
+
 function inScope(q: Question, scope: ExamScope): boolean {
-  if (scope.source !== 'both' && q.doc !== scope.source) return false;
+  const docs = scopeDocs(scope);
+  if (docs && !docs.includes(q.doc)) return false;
   if (scope.sections && scope.sections.length > 0 && !scope.sections.includes(q.section)) return false;
   return true;
 }
@@ -36,7 +44,8 @@ function eligible(q: Question, scope: ExamScope): boolean {
 
 /**
  * Representantes de las unidades del alcance: por unidad, copias puntuables dentro del alcance;
- * representante = primera con group 'cap' en orden del banco, si no la primera.
+ * representante = primera con group 'cap' en orden del banco; si no, la primera que no sea del extracto de
+ * Messer (las 45 del extracto tienen copia idéntica en el libro completo, con explicación del PDF); si no, la primera.
  */
 export function examCandidates(
   questions: Question[],
@@ -48,7 +57,7 @@ export function examCandidates(
   for (const u of units.values()) {
     const copies = u.members.map((id) => byId.get(id)!).filter((q) => inScope(q, scope) && eligible(q, scope));
     if (copies.length === 0) continue;
-    out.push(copies.find((q) => q.group === 'cap') ?? copies[0]!);
+    out.push(copies.find((q) => q.group === 'cap') ?? copies.find((q) => q.doc !== 'messer') ?? copies[0]!);
   }
   // orden estable según el banco
   const order = new Map(questions.map((q, i) => [q.id, i]));

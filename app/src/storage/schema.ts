@@ -1,5 +1,7 @@
 import type { DocId, Letter } from '../bank/types';
 import type { ExamConfig, ExamItem, ExamTotals, GradedExamItem } from '../grading/types';
+import type { Coverage, ModelOutput, ProviderName } from '../../shared/analysis/contract';
+import type { Derived } from '../../shared/analysis/derive';
 
 export type { ExamConfig, ExamItem, ExamTotals, GradedExamItem };
 
@@ -8,9 +10,11 @@ export type ThemePref = 'system' | 'light' | 'dark';
 export interface PracticeFilter {
   doc?: DocId;
   section?: string;
+  /** código de objetivo SY0-701 ("4.6"); solo existe en messerfull */
+  objective?: string;
   state?: 'all' | 'unanswered' | 'failed' | 'flagged' | 'pending_review';
   onlyFavorites?: boolean;
-  list?: 'falladas' | 'marcadas' | 'favoritas' | `attempt:${string}`;
+  list?: 'falladas' | 'marcadas' | 'favoritas' | `attempt:${string}` | `plan:${string}`;
 }
 
 export interface Prefs {
@@ -81,6 +85,36 @@ export interface AttemptsState {
 }
 
 export const MAX_ATTEMPTS = 100;
+
+// ---- Análisis con IA (PLAN-IA 8.1) ----
+
+export interface StoredAnalysis {
+  attemptId: string;
+  createdAt: number;
+  bankVersion: string;
+  promptVersion: string;
+  analysisSchemaVersion: 1;
+  provider: ProviderName;
+  model: string;
+  coverage: Coverage;
+  /** ya verificado */
+  output: ModelOutput;
+  derived: Derived;
+}
+
+export interface AnalysesState {
+  schemaVersion: 1;
+  byAttempt: Record<string, StoredAnalysis>;
+}
+
+export function emptyAnalyses(): AnalysesState {
+  return { schemaVersion: 1, byAttempt: {} };
+}
+
+/** Solo la forma exterior: cada entrada se valida aparte y se descarta individualmente (storage/analyses.ts). */
+export function isAnalysesState(x: unknown): x is AnalysesState {
+  return isObj(x) && x.schemaVersion === 1 && isObj(x.byAttempt);
+}
 
 export function emptyProgress(bankVersion: string): ProgressState {
   return { schemaVersion: 1, bankVersion, questions: {} };

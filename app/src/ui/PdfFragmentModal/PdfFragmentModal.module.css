@@ -1,3 +1,4 @@
+/* El único scroll es el del cuerpo del diálogo: el <pre> no tiene alto propio (PLAN-LAYOUT 11.3). */
 .pre {
   font-family: var(--font-mono);
   font-size: var(--fs-code);
@@ -8,6 +9,34 @@
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   padding: var(--sp-4);
-  max-height: 55vh;
-  overflow: auto;
+}
+.copyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+  width: 100%;
+}
+/* Imagen: el visor llena el cuerpo, que en este caso no se desplaza */
+.imageDialog {
+  height: min(90vh, calc(100vh - 32px));
+  height: min(90dvh, calc(100dvh - 32px));
+}
+.imageDialog [data-dialog-body] {
+  overflow: hidden;
+}
+.imageDialog [role='tabpanel'] {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+@media (max-height: 19.99em) {
+  .imageDialog {
+    height: auto;
+  }
+  .imageDialog [data-dialog-body] {
+    overflow: visible;
+  }
 }

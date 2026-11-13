@@ -56,3 +56,38 @@ Total: **1185 preguntas de opción** + **5 soluciones PBQ** (no puntuables).
 - Revisión visual contra imagen del PDF: Messer págs. 19 y 25 y Gorgotsias pág. 1479 (coinciden). **No** se comparó visualmente cada pregunta; los PDF tienen capa de texto, no se usó OCR.
 - Limitación: la unión de renglones partidos por guion (`off-\npeak` → `off-peak`) es una normalización de maquetación; se aplica solo si la línea termina en `letra-` y la siguiente empieza en minúscula.
 - Las explicaciones de Messer (45) son texto generado por IA, guardado aparte en `data/ai_explanations_messer.json`; las claves provienen del PDF.
+
+
+---
+
+# Adenda: tercer documento `messerfull` (importado 2026-11-12)
+
+Etapa de extracción ejecutada de nuevo por **Claude Sonnet 5.5** (no Opus). Scripts: `scripts/parse_messer_full.py` (nuevo), `build_bank.py` y `verify_bank.py` (ampliados). Los IDs, hashes y campos de las 1185 preguntas anteriores **no cambiaron** (comprobado comparando el banco anterior y el nuevo); sólo cambian `bankVersion` y las listas `duplicates`.
+
+| id | Documento | Páginas | Contenido |
+|---|---|---|---|
+| `messerfull` | Professor Messer's SY0-701 Security+ Practice Exams, **libro completo v1.6** (exámenes A, B y C) | 393 | 255 preguntas de opción (85 por examen: X6–X90) + 15 PBQ (X1–X5) con clave rápida y respuestas detalladas en el PDF (inglés) |
+
+Total del banco: **1440 preguntas de opción** (Gorgotsias 1140 · Messer extracto 45 · Messer libro completo 255) + **20 soluciones PBQ** (5 del extracto + 15 del libro).
+
+## Resultado de la incorporación
+- Añadidas: **255**. **45 ya existían** como duplicado idéntico del extracto (A46–A90; misma respuesta, sin conflicto) y **210 son nuevas**. Ninguna duplicada dentro del libro. Sin pares "similares" (≥0,6) no idénticos.
+- Respuestas del PDF: 255/255 (`answerStatus: "pdf"`); respuestas propuestas por IA: 0; pendientes de revisión: **0**. Puntuables en total: 1432 (1440 − 8 pendientes de Gorgotsias).
+- Cada respuesta tiene **dos fuentes independientes en el PDF** (clave rápida y línea «The Answer(s):»); coinciden en las 255 (una de ellas, A12, redacta la opción con otras palabras: nota). Para las respuestas múltiples se comprueba además que el texto de cada opción citada coincide con la opción de la pregunta.
+- Banco total tras deduplicar por texto: **796 preguntas únicas** (579 grupos idénticos + 217 sin copia).
+- 10 preguntas con `review.notes` (no bloquean): la copia de la pregunta en las respuestas detalladas difiere en la redacción de la de la sección de preguntas (variación del propio PDF) o la línea «The Answer:» parafrasea la opción: `msf-a012, msf-b027, msf-b055, msf-b078, msf-b083, msf-c016, msf-c020, msf-c027, msf-c048, msf-c054`.
+
+## Nuevos rasgos de contenido (la UI debe contemplarlos)
+- **Selección múltiple: 9** (antes 1): `msf-a014:AEG, msf-a023:BD, msf-a080:BC, msf-b039:AF, msf-b057:BD, msf-b072:AD, msf-b081:BE, msf-c054:DE, msf-c082:BD`. Hay «Select TWO» y **«Select THREE»** (`msf-a014`, 3 de 7 opciones). **Hasta 7 opciones (A–G)**: 241 con 4, 10 con 5, 3 con 6, 1 con 7.
+- `stem` con bloques `text`/`code`: ahora hay **viñetas** (cada «• …» es un bloque `text` propio) y **18 enunciados con logs/código** (bloques `code` con saltos de línea literales de la maquetación).
+- **`objective`** (nuevo, sólo `messerfull`): `{code, title, url}` tomado de «More information: SY0-701, Objective X.Y - …» del PDF (p. ej. `5.5`, `Penetration Tests`, enlace `professormesser.link`). Es el único metadato temático oficial de SY0-701 que aporta el material: puede usarse para filtrar o agrupar, con la advertencia de que existe sólo en este documento.
+- `explanation.origin: "pdf"` para las 255 (inglés): `text` + `perOption` (letras incorrectas con su explicación). No hay explicaciones de IA en este documento.
+- `answerSource`: `kind: "explanation"` + `keyPage`/`keyPrintedPage` (clave rápida) además de la página de la respuesta detallada. Página impresa = página PDF − 9.
+- `section`: `mf-a`, `mf-b`, `mf-c`; `topic`: `Practice Exam A|B|C` (mismo rótulo que el extracto: distinguir por `doc`). IDs: `msf-a006`…`msf-c090`.
+- `fragment` (texto literal, como Gorgotsias): `question` y `answer`; **no hay imágenes de página para las preguntas de opción** de este libro.
+- **PBQ nuevas (15)**: `bank.pbq` con `doc: "messerfull"`, ids `msf-pbq-a1`…`msf-pbq-c5`; campos extra `questionPages`/`answerPages`, `questionImages`/`answerImages` (JPG 150 dpi en `data/pages/messerfull/p-NNN.jpg`, **31 páginas, 4 MB**). Son arrastrar/emparejar/ordenar o completar tablas: sólo imagen y referencia, sin puntuación. En varias páginas hay **dos PBQ en la misma imagen** (p. ej. B3 y B4 en la pág. 141); la imagen del enunciado y la de la respuesta se muestran enteras.
+
+## Verificación de esta importación
+- `scripts/verify_bank.py` sobre los tres documentos: **1541 bloques de enunciado y 5780 opciones** aparecen literalmente en una segunda extracción del PDF (`-raw`); 0 diferencias; 0 problemas estructurales.
+- Revisión visual contra imagen de página: C54 (enunciado con log, 5 opciones, respuesta múltiple) y páginas PBQ B3/B4. No se compararon visualmente las 255 una por una.
+- Se detectaron y corrigieron durante la importación (derivas de maquetación, no del contenido): números de página y columna «Quick Answer / The Details» que se colaban en opciones, y párrafos de enunciado confundidos con código.

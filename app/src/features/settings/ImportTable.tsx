@@ -1,18 +1,23 @@
-import type { DocId, ImportReport } from '../../bank/types';
+import { docShort } from '../../bank/selectors';
+import { DOC_IDS, type DocId, type DocStats, type ImportReport } from '../../bank/types';
 
 export interface ImportRow {
   label: string;
-  values: [number, number, number];
+  /** un valor por documento (en el orden de `importDocs`) y el total al final */
+  values: number[];
+}
+
+/** Documentos presentes en el reporte, en orden del banco. */
+export function importDocs(r: ImportReport): DocId[] {
+  return DOC_IDS.filter((d) => r.stats[d] !== undefined);
 }
 
 /** Filas de la tabla de resumen, armadas desde import-report.json (nunca con números fijos). */
 export function importRows(r: ImportReport, extended = false): ImportRow[] {
-  const g = r.stats.gorgotsias;
-  const m = r.stats.messer;
-  const row = (label: string, pick: (d: (typeof r.stats)[DocId]) => number): ImportRow => {
-    const a = pick(g);
-    const b = pick(m);
-    return { label, values: [a, b, a + b] };
+  const docs = importDocs(r);
+  const row = (label: string, pick: (d: DocStats) => number): ImportRow => {
+    const vals = docs.map((d) => pick(r.stats[d]));
+    return { label, values: [...vals, vals.reduce((a, b) => a + b, 0)] };
   };
   const rows = [
     row('Encontradas en el PDF', (d) => d.found),
@@ -32,10 +37,13 @@ export function importRows(r: ImportReport, extended = false): ImportRow[] {
   return rows;
 }
 
-export function ImportTable({ report, extended = false, pbqCount }: { report: ImportReport; extended?: boolean; pbqCount?: Record<DocId, number> }) {
+export function ImportTable({ report, extended = false, pbqCount }: { report: ImportReport; extended?: boolean; pbqCount?: Partial<Record<DocId, number>> }) {
   const rows = importRows(report, extended);
+  const docs = importDocs(report);
+  const pbq = pbqCount ? docs.map((d) => pbqCount[d] ?? 0) : null;
   return (
-    <div className="table-wrap">
+    // con tres documentos la tabla puede desplazarse en horizontal en móvil: el contenedor es enfocable
+    <div className="table-wrap" tabIndex={0} role="region" aria-label="Resumen de importación del banco (tabla desplazable)">
       <table className="table" data-testid="import-table">
         <caption>Resumen de importación del banco</caption>
         <thead>
@@ -43,12 +51,11 @@ export function ImportTable({ report, extended = false, pbqCount }: { report: Im
             <th scope="col">
               <span className="sr-only">Dato</span>
             </th>
-            <th scope="col" className="n">
-              Gorgotsias
-            </th>
-            <th scope="col" className="n">
-              Messer
-            </th>
+            {docs.map((d) => (
+              <th key={d} scope="col" className="n">
+                {docShort(d)}
+              </th>
+            ))}
             <th scope="col" className="n">
               Total
             </th>
@@ -65,12 +72,15 @@ export function ImportTable({ report, extended = false, pbqCount }: { report: Im
               ))}
             </tr>
           ))}
-          {extended && pbqCount !== undefined && (
+          {extended && pbq && (
             <tr>
               <th scope="row">Soluciones PBQ (no puntuables)</th>
-              <td className="n">{pbqCount.gorgotsias}</td>
-              <td className="n">{pbqCount.messer}</td>
-              <td className="n">{pbqCount.gorgotsias + pbqCount.messer}</td>
+              {pbq.map((v, i) => (
+                <td key={i} className="n">
+                  {v}
+                </td>
+              ))}
+              <td className="n">{pbq.reduce((a, b) => a + b, 0)}</td>
             </tr>
           )}
         </tbody>

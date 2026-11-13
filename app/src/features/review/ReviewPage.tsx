@@ -2,10 +2,12 @@ import { CircleCheck, CircleX, Eye, EyeOff, Flag, History, Star, TriangleAlert }
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useBank } from '../../bank/BankProvider';
-import { docShort, stemPreview } from '../../bank/selectors';
+import { docShort, duplicateLabel, sectionLabel, stemPreview } from '../../bank/selectors';
 import type { DocId } from '../../bank/types';
 import { es, formatDate, formatDuration, relTime } from '../../i18n/es';
+import { useAnalysis } from '../../state/analysisStore';
 import { useExam } from '../../state/examStore';
+import { analysisPlanPath } from '../exam/analysisPaths';
 import { useProgress } from '../../state/progressStore';
 import { groupByUnit, reviewListIds, STUDY_STATE_LABEL, type ReviewList, type StudyState } from '../../state/selectors';
 import { formatPercent } from '../../grading/scoreAttempt';
@@ -13,7 +15,7 @@ import { ButtonLink } from '../../ui/Button/Button';
 import { EmptyState } from '../../ui/States/States';
 import { TabPanel, Tabs } from '../../ui/Tabs/Tabs';
 import { PageHeader } from '../app/PageHeader';
-import { sourceLabel } from '../exam/ExamSetup';
+import { configSourceLabel } from '../exam/ExamSetup';
 import { practiceUrl } from '../practice/filterQuery';
 import s from './Review.module.css';
 
@@ -158,7 +160,7 @@ function ListTab({
             <option value="">{es.filter.allF}</option>
             {sections.map((x) => (
               <option key={x.section} value={x.section}>
-                {x.topic}
+                {sectionLabel(x)}
               </option>
             ))}
           </select>
@@ -183,9 +185,7 @@ function ListTab({
               <li key={r.unitId} className={s.row}>
                 <StateTag st={r.state} />
                 <Link to={practiceUrl(q.id, f)} className={s.origin}>
-                  <span lang="en">
-                    {q.topic} · {q.originalLabel}
-                  </span>
+                  <span lang="en">{duplicateLabel(q)}</span>
                 </Link>
                 <span className={s.preview} lang="en" title={pv.truncated ? full : undefined}>
                   {pv.text}
@@ -207,6 +207,7 @@ function ListTab({
 function HistoryTab() {
   const bank = useBank();
   const attempts = useExam((st) => st.attempts.attempts);
+  const analyses = useAnalysis((st) => st.analyses);
   if (attempts.length === 0) {
     return (
       <EmptyState
@@ -254,14 +255,21 @@ function HistoryTab() {
                   </>
                 )}
               </td>
-              <td>{sourceLabel(a.config.source)}</td>
+              <td>{configSourceLabel(a.config)}</td>
               <td className="n">{a.totals.scorable}</td>
               <td className="n">{formatPercent(a.totals.correct, a.totals.scorable) ?? '—'}</td>
               <td className="n">{a.config.timerMinutes !== null ? formatDuration(a.elapsedMs) : '—'}</td>
               <td>
-                <Link to={`/examen/resultado/${a.id}`} aria-label={`Ver resultado del ${formatDate(a.finishedAt)}`}>
-                  Ver
-                </Link>
+                <span className={s.actions}>
+                  <Link to={`/examen/resultado/${a.id}`} aria-label={`Ver resultado del ${formatDate(a.finishedAt)}`}>
+                    Ver
+                  </Link>
+                  {analyses.byAttempt[a.id] && (
+                    <Link to={analysisPlanPath(a.id)} aria-label={`Ver plan de estudio del ${formatDate(a.finishedAt)}`}>
+                      Ver plan
+                    </Link>
+                  )}
+                </span>
               </td>
             </tr>
           ))}

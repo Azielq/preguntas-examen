@@ -3,12 +3,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useBank } from '../../bank/BankProvider';
 import { questionHeaderLabel } from '../../bank/selectors';
-import type { DocId } from '../../bank/types';
+import { DOC_IDS, type DocId } from '../../bank/types';
 import { es } from '../../i18n/es';
 import { buildExport, parseImport, type ParsedImport } from '../../storage/exportImport';
 import { reconcileMessage } from '../../storage/reconcile';
 import { storageAvailable } from '../../storage/storage';
+import { useAnalysis } from '../../state/analysisStore';
 import { useExam } from '../../state/examStore';
+import { AiSettings } from './AiSettings';
 import { usePrefs } from '../../state/prefsStore';
 import { useProgress } from '../../state/progressStore';
 import { toast } from '../../state/toastStore';
@@ -34,6 +36,9 @@ export function Settings() {
   const attempts = useExam((st) => st.attempts);
   const replaceAttempts = useExam((st) => st.replaceAttempts);
   const clearExams = useExam((st) => st.clearAll);
+  const analyses = useAnalysis((st) => st.analyses);
+  const analysesCount = Object.keys(analyses.byAttempt).length;
+  const [forgetToken, setForgetToken] = useState(false);
   const { pbq } = usePbq();
   const [helpOpen, setHelpOpen] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
@@ -41,6 +46,7 @@ export function Settings() {
   const [importError, setImportError] = useState('');
   const fileInput = useRef<HTMLInputElement>(null);
   const report = bank.manifest.importReport;
+  const crossDoc = bank.questions.filter((q) => q.duplicates.some((id) => { const d = bank.indexes.byId.get(id); return !!d && d.doc !== q.doc && q.doc === 'messer'; })).length;
 
   useEffect(() => {
     if (loc.hash) {
@@ -50,12 +56,13 @@ export function Settings() {
   }, [loc.hash]);
 
   const answers = Object.values(progress.questions).filter((p) => p.last).length;
-  const pbqCount: Record<DocId, number> | undefined = pbq
-    ? { gorgotsias: pbq.filter((p) => p.doc === 'gorgotsias').length, messer: pbq.filter((p) => p.doc === 'messer').length }
-    : undefined;
+  const pbqCount: Partial<Record<DocId, number>> | undefined = pbq
+    ? Object.fromEntries(DOC_IDS.map((d) => [d, pbq.filter((p) => p.doc === d).length]))
+    : bank.manifest.pbqCounts;
 
   const doExport = () => {
-    const data = buildExport(prefs, progress, attempts);
+    // el token de acceso a la IA nunca se exporta
+    const data = buildExport(prefs, progress, attempts, new Date(), analyses);
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -120,7 +127,7 @@ export function Settings() {
         <ImportTable report={report} extended pbqCount={pbqCount} />
         <p className="small muted">
           {report.identicalDuplicateGroups} grupos de preguntas repetidas ({report.questionsInIdenticalDuplicateGroups} preguntas en esos grupos) ·{' '}
-          {bank.indexes.units.size} preguntas distintas. Las explicaciones de IA se muestran rotuladas; las respuestas puntuables provienen del PDF.
+          {bank.indexes.units.size} preguntas distintas {crossDoc > 0 && ` (${crossDoc} preguntas del extracto de Messer son copias idénticas de preguntas del libro completo y cuentan una vez)`}. Las explicaciones de IA se muestran rotuladas; las respuestas puntuables provienen del PDF.
         </p>
 
         <h3>Preguntas pendientes de revisión ({report.pending.length})</h3>
@@ -195,6 +202,8 @@ export function Settings() {
         </ul>
       </section>
 
+      <AiSettings />
+
       <section id="datos" className={`card ${s.section}`} aria-labelledby="h-datos">
         <h2 id="h-datos">Tus datos</h2>
         <p className="muted">
@@ -235,6 +244,9 @@ export function Settings() {
               onClick={() => {
                 clearProgress();
                 clearExams();
+                useAnalysis.getState().clearAll();
+                if (forgetToken) useAnalysis.getState().forgetToken();
+                setForgetToken(false);
                 setConfirmClear(false);
                 toast('Progreso borrado');
               }}
@@ -248,6 +260,11 @@ export function Settings() {
           Vas a borrar {answers} respuestas y {attempts.attempts.length} exámenes, además de favoritas, marcas y el examen en curso si lo hay. Las preferencias de
           apariencia se conservan.
         </p>
+        {analysesCount > 0 && <p>También se borran {analysesCount === 1 ? '1 análisis de IA guardado' : `${analysesCount} análisis de IA guardados`}.</p>}
+        <label className="check">
+          <input type="checkbox" checked={forgetToken} onChange={(e) => setForgetToken(e.target.checked)} />
+          También olvidar el token de IA
+        </label>
       </Dialog>
 
       <Dialog
@@ -264,6 +281,7 @@ export function Settings() {
                 if (!pendingImport) return;
                 replaceProgress(pendingImport.progress);
                 replaceAttempts(pendingImport.attempts);
+                useAnalysis.getState().replaceAll(pendingImport.analyses);
                 replacePrefs(pendingImport.prefs);
                 setPendingImport(null);
                 toast('Progreso importado');
@@ -280,6 +298,11 @@ export function Settings() {
               El archivo tiene {pendingImport.summary.questions} preguntas con progreso y {pendingImport.summary.attempts} exámenes. Va a reemplazar (no fusionar) los{' '}
               {Object.keys(progress.questions).length} registros y {attempts.attempts.length} exámenes actuales.
             </p>
+            {(pendingImport.analysesCount > 0 || analysesCount > 0) && (
+              <p>
+                {pendingImport.analysesCount} análisis de IA en el archivo (reemplazan a los {analysesCount} actuales).
+              </p>
+            )}
             {reconcileMessage(pendingImport.reconcile) && <p className="small muted">{reconcileMessage(pendingImport.reconcile)}</p>}
           </>
         )}

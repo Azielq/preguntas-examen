@@ -2,9 +2,10 @@ import { BookOpenCheck, Network, Play, Timer } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useBank } from '../../bank/BankProvider';
-import { docShort } from '../../bank/selectors';
+import { docShort, objectivesOf } from '../../bank/selectors';
 import type { DocId } from '../../bank/types';
 import { es, formatDuration, relTime } from '../../i18n/es';
+import { useAnalysis } from '../../state/analysisStore';
 import { useExam } from '../../state/examStore';
 import { useProgress } from '../../state/progressStore';
 import { filterQuestions, progressStats } from '../../state/selectors';
@@ -106,6 +107,7 @@ function ContinueCard() {
   const progress = useProgress((st) => st.state);
   const exam = useExam((st) => st.active);
   const attempts = useExam((st) => st.attempts);
+  const analyses = useAnalysis((st) => st.analyses);
   if (exam) {
     const answered = exam.items.filter((i) => i.selected.length > 0).length;
     return (
@@ -128,7 +130,7 @@ function ContinueCard() {
   const lp = progress.lastPractice;
   const q = lp ? bank.indexes.byId.get(lp.questionId) : undefined;
   if (lp && q) {
-    const list = filterQuestions({ questions: bank.questions, progress, attempts }, lp.filter);
+    const list = filterQuestions({ questions: bank.questions, progress, attempts, analyses }, lp.filter);
     const pos = list.findIndex((x) => x.id === q.id);
     const title = lp.filter.list || !lp.filter.section ? listTitle(lp.filter, bank) : q.topic;
     return (
@@ -173,7 +175,32 @@ function DocCard({ doc }: { doc: DocId }) {
   const sections = bank.manifest.sections.filter((x) => x.doc === doc);
   const caps = sections.filter((x) => x.group === 'cap').length;
   const sims = sections.filter((x) => x.group === 'sim').length;
-  const labels = qs.map((q) => q.originalLabel);
+  const pbqN = bank.manifest.pbqCounts?.[doc] ?? 0;
+  const objectives = doc === 'messerfull' ? objectivesOf(qs).length : 0;
+  const multiple = qs.filter((q) => q.selectionType === 'multiple').length;
+  const otherDocIds = new Set<DocId>();
+  const inOther = qs.filter((q) => {
+    let hit = false;
+    for (const id of q.duplicates) {
+      const o = bank.indexes.byId.get(id);
+      if (o && o.doc !== doc) {
+        otherDocIds.add(o.doc);
+        hit = true;
+      }
+    }
+    return hit;
+  }).length;
+  const otherDocs = [...otherDocIds].map(docShort).join(' y ');
+  const describe = (): string => {
+    if (caps + sims > 0) return `${caps} capítulos · ${sims} simulacros`;
+    const exams = sections.map((x) => x.topic).join(', ');
+    const range = qs.length > 0 ? `${qs[0]!.originalLabel}–${qs[qs.length - 1]!.originalLabel}` : '';
+    const parts = [sections.length > 1 ? exams : `${exams} (${range})`];
+    if (pbqN > 0) parts.push(`${pbqN} PBQ (solo referencia)`);
+    if (multiple > 0) parts.push(`${multiple} de selección múltiple`);
+    if (objectives > 0) parts.push(`${objectives} objetivos SY0-701`);
+    return parts.join(' · ');
+  };
   return (
     <article className={`card ${s.doc}`} aria-labelledby={`doc-${doc}`}>
       <h3 id={`doc-${doc}`} className="card-title">
@@ -185,11 +212,13 @@ function DocCard({ doc }: { doc: DocId }) {
       <p className="small muted num">
         {qs.length} preguntas · {d.pages} pág.
       </p>
-      <p className="small muted">
-        {doc === 'messer'
-          ? `${labels[0]}–${labels[labels.length - 1]}${bank.manifest.importReport.pbqSolutions > 0 ? ` · ${bank.manifest.importReport.pbqSolutions} soluciones PBQ` : ''}`
-          : `${caps} capítulos · ${sims} simulacros`}
-      </p>
+      <p className="small muted">{describe()}</p>
+      {inOther > 0 && (
+        <p className="small muted">
+          {inOther === qs.length ? 'Todas sus preguntas' : `${inOther} de sus preguntas`} también {inOther === 1 ? 'está' : 'están'} en {otherDocs}: en un examen con
+          ambos documentos cuentan una vez.
+        </p>
+      )}
       {st.scorable > 0 && (
         <div className="stack-sm">
           <ProgressBar value={st.answered} max={st.scorable} label={`${st.answered} de ${st.scorable} respondidas`} />
@@ -201,6 +230,7 @@ function DocCard({ doc }: { doc: DocId }) {
       <div className="row">
         {report.pending > 0 && <span className="chip warning">{report.pending} pendientes de revisión</span>}
         {report.explanationAi > 0 && <span className="chip warning">explicaciones de IA</span>}
+        {report.explanationFromPdf > 0 && report.explanationAi === 0 && <span className="chip info">explicaciones del PDF</span>}
       </div>
       <div className="row">
         <ButtonLink to={`/practica${filterToQuery({ doc })}`} variant="primary" icon={<BookOpenCheck size={18} aria-hidden="true" />}>
@@ -209,8 +239,8 @@ function DocCard({ doc }: { doc: DocId }) {
         <ButtonLink to={`/examen?origen=${doc}`} icon={<Timer size={18} aria-hidden="true" />}>
           Examen
         </ButtonLink>
-        {doc === 'messer' && bank.manifest.importReport.pbqSolutions > 0 && (
-          <ButtonLink to="/pbq" icon={<Network size={18} aria-hidden="true" />}>
+        {pbqN > 0 && (
+          <ButtonLink to={`/pbq?doc=${doc}`} icon={<Network size={18} aria-hidden="true" />} aria-label={`PBQ de ${docShort(doc)}`}>
             PBQ
           </ButtonLink>
         )}

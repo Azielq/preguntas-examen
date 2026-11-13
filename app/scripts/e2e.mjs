@@ -1,52 +1,23 @@
 // Verificación en navegador real (Playwright + Chromium headless) contra `vite preview`.
 // Uso: npm run build && npx vite preview --port 4173  (en otra terminal)  →  npm run e2e
 // Requiere: npx playwright install chromium. Capturas en e2e-output/.
-import { mkdirSync, readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { chromium } from 'playwright';
+import { createRunner } from './lib/e2e-utils.mjs';
 
-const require = createRequire(import.meta.url);
-const AXE = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 const BASE = process.env.E2E_URL ?? 'http://localhost:4173/';
 const OUT = 'e2e-output';
-mkdirSync(OUT, { recursive: true });
+// En vite preview no hay funciones: /api/ai-status responde 404 a propósito (la app muestra "no disponible").
+const notFound = [];
+const { results, check, newPage, go, shot, noHScroll, axeCheck, finish } = await createRunner({ base: BASE, out: OUT });
 
-const results = [];
-const consoleProblems = [];
-function check(name, ok, detail = '') {
-  results.push({ name, ok: !!ok, detail });
-  console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}${detail ? ` — ${detail}` : ''}`);
-}
-
-const browser = await chromium.launch();
-
-async function newPage(viewport, opts = {}) {
-  const ctx = await browser.newContext({ viewport, ...opts });
-  const page = await ctx.newPage();
-  page.on('console', (m) => {
-    if (m.type() === 'error' || m.type() === 'warning') consoleProblems.push(`[${viewport.width}] ${m.type()}: ${m.text()}`);
-  });
-  page.on('pageerror', (e) => consoleProblems.push(`[${viewport.width}] pageerror: ${e.message}`));
-  return { ctx, page };
-}
-
-async function go(page, hash) {
-  await page.goto(`${BASE}#${hash}`);
-  await page.waitForSelector('main h1');
-}
-async function shot(page, name, full = true) {
-  await page.waitForTimeout(350); // dejar terminar transiciones
-  await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: full });
-}
-const noHScroll = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);
-
-async function axeCheck(page, label) {
-  await page.addScriptTag({ content: AXE });
-  const r = await page.evaluate(async () => {
-    const res = await window.axe.run(document, { resultTypes: ['violations'] });
-    return res.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => `${v.id} (${v.nodes.length}): ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
-  });
-  check(`axe sin infracciones serias/críticas: ${label}`, r.length === 0, r.join(' ; '));
+/** Abre una hoja por el botón de la pantalla de pregunta (directo o desde "Más" en pantallas angostas). */
+async function openSheet(page, name, tap = false) {
+  const direct = page.locator('[data-qregion="header"], [data-qregion="status"]').getByRole('button', { name });
+  if ((await direct.count()) > 0 && (await direct.first().isVisible())) await (tap ? direct.first().tap() : direct.first().click());
+  else {
+    await page.getByRole('button', { name: /^Más$/ }).click();
+    await page.locator('dialog[open]').getByRole('button', { name }).click();
+  }
+  await page.waitForSelector('dialog[open]');
 }
 
 // ---------------- Escritorio 1280 ----------------
@@ -76,10 +47,18 @@ async function axeCheck(page, label) {
   await page.locator('article label', { hasText: 'Non-repudiation' }).click();
   await page.getByRole('button', { name: /Comprobar/ }).click();
   await page.waitForSelector('[data-feedback="correct"]');
-  const expl = await page.locator('section[data-origin="pdf"]').textContent();
-  check('gor-cap1-0001 correcta con explicación del PDF, pág. 51 y A/B/D', expl.includes('Explicación del PDF (en inglés)') && expl.includes('pág. 51') && (await page.locator('section[data-origin="pdf"] li').count()) === 3);
-  await shot(page, 'd02-practica-correcta');
+  check('Tras comprobar no hay explicación en el DOM hasta abrir la hoja', (await page.locator('section[data-origin]').count()) === 0);
+  await shot(page, 'd02-practica-correcta', false);
   await axeCheck(page, 'Práctica comprobada (claro)');
+  await page.getByRole('button', { name: 'Ver explicación del PDF' }).click();
+  await page.waitForSelector('dialog[open][data-sheet="explanation"] section[data-origin="pdf"]');
+  const expl = await page.locator('dialog[open] section[data-origin="pdf"]').textContent();
+  check('gor-cap1-0001 correcta con explicación del PDF, pág. 51 y A/B/D (en la hoja)', expl.includes('Explicación del PDF (en inglés)') && expl.includes('pág. 51') && (await page.locator('dialog[open] section[data-origin="pdf"] li').count()) === 3);
+  await shot(page, 'd02b-practica-hoja-explicacion', false);
+  await axeCheck(page, 'Práctica con hoja de explicación (claro)');
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('dialog[open]', { state: 'detached' }).catch(() => {});
+  check('Esc cierra la hoja de explicación y el foco vuelve a su botón', (await page.evaluate(() => document.activeElement?.getAttribute('data-action'))) === 'explanation');
 
   // Fragmento Gorgotsias (texto)
   const fragBefore = requests.filter((u) => u.includes('/fragments/')).length;
@@ -100,7 +79,7 @@ async function axeCheck(page, label) {
   await page.getByRole('button', { name: 'Agregar a favoritas' }).click();
   await page.reload();
   await page.waitForSelector('article');
-  check('Tras recargar: favorita y "Última vez" persisten', (await page.getByRole('button', { name: 'Quitar de favoritas' }).count()) === 1 && (await page.textContent('article')).includes('Última vez: correcta'));
+  check('Tras recargar: favorita y "Última vez" (en la franja) persisten', (await page.getByRole('button', { name: 'Quitar de favoritas' }).count()) === 1 && (await page.textContent('[data-qregion="status"]')).includes('Última vez: correcta'));
 
   // Respuesta bloqueada antes de comprobar
   await go(page, '/practica/gor-cap1-0002');
@@ -109,7 +88,7 @@ async function axeCheck(page, label) {
   check('Pestaña Respuesta bloqueada antes de comprobar', (await page.getByRole('tab', { name: /Respuesta/ }).getAttribute('aria-disabled')) === 'true');
   const cap1Count = requests.filter((u) => u.includes('/fragments/cap1.')).length;
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: /Siguiente/ }).click();
+  await page.locator('[data-qregion="actions"]').getByRole('button', { name: /Siguiente/ }).click();
   await page.waitForSelector('article[data-question-id="gor-cap1-0003"]');
   await page.getByRole('button', { name: /Ver fragmento del PDF/ }).click();
   await page.waitForSelector('dialog[open] pre');
@@ -119,15 +98,22 @@ async function axeCheck(page, label) {
   // Múltiple msr-a080 + imagen Messer
   await go(page, '/practica/msr-a080');
   check('msr-a080: <script> literal no crea elementos script', (await page.locator('main script').count()) === 0 && (await page.locator('pre').first().textContent()).includes('<script>alert(2)</script>'));
+  // al pasar de pregunta el foco no se mueve (seguía en "Ver fragmento"): se parte del rótulo de la pregunta
+  await page.locator('[data-focus-fallback]').focus();
   await page.keyboard.press('2');
   const disabledWithOne = await page.getByRole('button', { name: /Comprobar/ }).getAttribute('aria-disabled');
   await page.keyboard.press('3');
   check('msr-a080: Comprobar solo con 2 marcadas (atajos numéricos)', disabledWithOne === 'true' && (await page.getByRole('button', { name: /Comprobar/ }).getAttribute('aria-disabled')) === null);
   await page.keyboard.press('Enter');
   await page.waitForSelector('[data-feedback]');
-  const aiExpl = await page.locator('section[data-origin="ai"]').textContent();
+  check('msr-a080: el botón de explicación lleva el origen IA', (await page.locator('[data-action="explanation"]').getAttribute('data-origin')) === 'ai');
+  await page.keyboard.press('x');
+  await page.waitForSelector('dialog[open] section[data-origin="ai"]');
+  const aiExpl = await page.locator('dialog[open] section[data-origin="ai"]').textContent();
   check('msr-a080: correcta, explicación de IA rotulada, clave rápida pág. PDF 17 (impresa 33)', aiExpl.includes('Explicación generada por IA — no es del PDF') && aiExpl.includes('pág. PDF 17 (impresa 33)') && !aiExpl.includes('Por qué las otras'));
-  await shot(page, 'd04-msr-a080-comprobada');
+  await shot(page, 'd04-msr-a080-comprobada', false);
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('dialog[open]', { state: 'detached' }).catch(() => {});
   await page.keyboard.press('v');
   await page.waitForSelector('dialog[open] img');
   await page.waitForFunction(() => {
@@ -164,7 +150,11 @@ async function axeCheck(page, label) {
   // Pendiente
   await go(page, '/practica/gor-cap1-0023');
   const art = await page.textContent('article');
-  check('gor-cap1-0023 muestra "Pendiente de revisión" y el motivo', art.includes('Pendiente de revisión') && art.includes('Contradicción en el PDF'));
+  await openSheet(page, 'Ver motivo');
+  const why = await page.textContent('dialog[open]');
+  check('gor-cap1-0023 muestra "Pendiente de revisión" y el motivo (hoja "Ver motivo")', art.includes('Pendiente de revisión') && art.includes('no se corrige') && why.includes('Contradicción en el PDF'));
+  await page.keyboard.press('Escape');
+  await page.waitForSelector('dialog[open]', { state: 'detached' }).catch(() => {});
   await page.getByRole('button', { name: /Ver lo que dice el PDF/ }).click();
   await page.waitForSelector('[data-feedback="unreliable"]');
   check('Pendiente revelada: sin verde ni rojo', (await page.locator('[data-state="correct"],[data-state="incorrect"],[data-state="missed"]').count()) === 0);
@@ -173,7 +163,10 @@ async function axeCheck(page, label) {
   // Examen completo
   await go(page, '/examen');
   await axeCheck(page, 'Examen configuración');
-  await page.getByRole('radio', { name: /Messer/ }).check({ force: true });
+  // solo el extracto de Messer (como antes): se destildan los otros dos documentos
+  await page.getByRole('checkbox', { name: /Gorgotsias/ }).uncheck({ force: true });
+  await page.getByRole('checkbox', { name: /Messer \(libro completo\)/ }).uncheck({ force: true });
+  check('Examen: máximo del extracto de Messer = 45', (await page.textContent('main')).includes('(Messer (extracto)): 45 preguntas distintas'));
   await page.getByRole('radio', { name: '10' }).check({ force: true });
   await shot(page, 'd08-examen-config');
   await page.getByRole('button', { name: /Empezar examen/ }).click();
@@ -211,8 +204,11 @@ async function axeCheck(page, label) {
   await axeCheck(page, 'Resultado');
   await page.getByRole('link', { name: 'Revisar todas' }).click();
   await page.waitForSelector('article');
-  await shot(page, 'd12-revision');
-  check('Revisión muestra explicación rotulada', (await page.textContent('article')).includes('Explicación generada por IA'));
+  await shot(page, 'd12-revision', false);
+  await page.keyboard.press('x');
+  await page.waitForSelector('dialog[open] section[data-origin="ai"]');
+  check('Revisión muestra explicación rotulada (hoja)', (await page.textContent('dialog[open]')).includes('Explicación generada por IA'));
+  await page.keyboard.press('Escape');
   await page.reload();
   await page.waitForSelector('article');
   check('El intento sobrevive a recargar', (await page.evaluate(() => JSON.parse(localStorage.getItem('secplus:v1:attempts')).attempts.length)) === 1);
@@ -227,12 +223,24 @@ async function axeCheck(page, label) {
   // PBQ
   await go(page, '/pbq');
   await page.waitForSelector('main li');
-  check('PBQ lista 5 soluciones', (await page.locator('main li.card, main li[class*="card"]').count()) === 5);
+  check('PBQ lista 20 soluciones (5 del extracto + 15 del libro completo)', (await page.locator('main li.card, main li[class*="card"]').count()) === 20);
   await go(page, '/pbq/msr-pbq-a1');
-  await page.waitForFunction(() => [...document.querySelectorAll('main img')].every((i) => i.complete && i.naturalWidth > 0) && document.querySelectorAll('main img').length === 2);
-  check('PBQ A1 muestra sus 2 páginas y no tiene controles de respuesta', (await page.locator('main img').count()) === 2 && (await page.locator('main input[type=radio], main input[type=checkbox]').count()) === 0);
-  await shot(page, 'd15-pbq-a1');
+  await page.waitForFunction(() => [...document.querySelectorAll('main img')].every((i) => i.complete && i.naturalWidth > 0) && document.querySelectorAll('main img').length === 1);
+  const pageText1 = await page.textContent('[data-zoom-viewer]').then(() => page.locator('[role="toolbar"]').textContent());
+  const src1 = await page.locator('main img').getAttribute('src');
+  await page.getByRole('button', { name: 'Página siguiente' }).click();
+  await page.waitForFunction((s1) => document.querySelector('main img')?.getAttribute('src') !== s1, src1);
+  check(
+    'PBQ A1: una página por vez con paginador ("Página 1 de 2") y sin controles de respuesta',
+    pageText1.includes('Página 1 de 2') && (await page.locator('[role="toolbar"]').textContent()).includes('Página 2 de 2') && (await page.locator('main input[type=radio], main input[type=checkbox]').count()) === 0,
+  );
+  await shot(page, 'd15-pbq-a1', false);
   await axeCheck(page, 'PBQ detalle');
+  await go(page, '/pbq/msf-pbq-b3');
+  await page.waitForFunction(() => document.querySelector('main img')?.complete);
+  const b3 = await page.textContent('main');
+  check('PBQ B3 del libro completo: enunciado y solución, avisa que la página comparte otra PBQ', b3.includes('Enunciado') && /también contiene la PBQ B4/.test(b3) && (await page.locator('[role="toolbar"]').textContent()).includes('Página 1 de'));
+  await shot(page, 'd15b-pbq-msf-b3', false);
 
   // Ajustes
   await go(page, '/ajustes');
@@ -300,15 +308,14 @@ async function axeCheck(page, label) {
   await page.getByRole('button', { name: /Comprobar/ }).tap();
   await page.waitForSelector('[data-feedback]');
   await shot(page, 'm03-msr-a080', false);
-  await shot(page, 'm03b-msr-a080-full');
   check('Móvil: sin scroll horizontal (msr-a080 con log)', await noHScroll(page));
   const bar = await page.evaluate(() => {
-    const b = document.querySelector('[class*="actions"]');
+    const b = document.querySelector('[data-qregion="actions"]');
     const r = b.getBoundingClientRect();
-    return { pos: getComputedStyle(b).position, bottom: Math.round(window.innerHeight - r.bottom) };
+    return { pos: getComputedStyle(b).position, bottom: Math.round(window.innerHeight - r.bottom), bottomNav: [...document.querySelectorAll('nav[aria-label="Principal"]')].filter((n) => n.getClientRects().length > 0).length, docScroll: document.documentElement.scrollHeight - window.innerHeight };
   });
-  check('Móvil: barra de acciones fija sobre la navegación inferior', bar.pos === 'fixed' && bar.bottom >= 60, JSON.stringify(bar));
-  await page.getByRole('button', { name: /Ver fragmento del PDF/ }).tap();
+  check('Móvil: barra de acciones como fila de la grilla, al pie de la ventana, sin navegación inferior ni scroll de página', bar.pos !== 'fixed' && bar.bottom >= 0 && bar.bottom <= 2 && bar.bottomNav === 0 && bar.docScroll <= 1, JSON.stringify(bar));
+  await openSheet(page, /Ver fragmento del PDF/);
   await page.waitForFunction(() => {
     const i = document.querySelector('dialog[open] img');
     return i && i.complete && i.naturalWidth > 0;
@@ -316,7 +323,7 @@ async function axeCheck(page, label) {
   await shot(page, 'm04-fragmento-messer', false);
   await page.keyboard.press('Escape');
   await go(page, '/practica/gor-cap1-0001');
-  await page.getByRole('button', { name: /Ver fragmento del PDF/ }).tap();
+  await openSheet(page, /Ver fragmento del PDF/);
   await page.waitForSelector('dialog[open] pre');
   await shot(page, 'm05-fragmento-gorgotsias', false);
   await page.keyboard.press('Escape');
@@ -363,9 +370,7 @@ async function axeCheck(page, label) {
   await ctx.close();
 }
 
-await browser.close();
-const relevant = consoleProblems.filter((c) => !c.includes('Failed to load resource: the server responded with a status of 500'));
-check('Sin errores ni advertencias en la consola', relevant.length === 0, relevant.slice(0, 5).join(' | '));
-const failed = results.filter((r) => !r.ok);
-console.log(`\n${results.length - failed.length}/${results.length} verificaciones OK`);
-process.exit(failed.length ? 1 : 0);
+const only404Api = notFound.every((u) => u.includes('/api/ai-status'));
+check('Los únicos 404 son de /api/ai-status (sin funciones en vite preview)', only404Api, [...new Set(notFound)].join(', '));
+const failed = await finish((c) => !c.includes('Failed to load resource: the server responded with a status of 500') && !(only404Api && c.includes('status of 404')));
+process.exit(failed ? 1 : 0);

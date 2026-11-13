@@ -18,5 +18,5 @@
     "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom", "node"],
     "noEmit": true
   },
-  "include": ["src", "vite.config.ts", "scripts/*.d.ts"]
+  "include": ["src", "api", "server", "shared", "vite.config.ts", "scripts/*.d.ts"]
 }

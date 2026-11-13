@@ -12,6 +12,12 @@ export interface ShortcutHandlers {
   fragment?(): void;
   navigator?(): void;
   help?(): void;
+  /** L: vista completa (PLAN-LAYOUT 13.1) */
+  full?(): void;
+  /** X: ver explicación */
+  explanation?(): void;
+  /** I: ver detalle / motivo */
+  detail?(): void;
 }
 
 export interface ShortcutOptions {
@@ -42,6 +48,9 @@ const LETTER_ACTIONS: Record<string, keyof ShortcutHandlers> = {
   m: 'flag',
   v: 'fragment',
   g: 'navigator',
+  l: 'full',
+  x: 'explanation',
+  i: 'detail',
 };
 
 /** Atajos de teclado de PLAN 5.4. Los handlers se leen por ref (no hace falta memoizarlos). */
@@ -58,7 +67,7 @@ export function useShortcuts(handlers: ShortcutHandlers, opts: ShortcutOptions) 
       const target = e.target as HTMLElement | null;
       const onControl = !!target?.closest('button, a[href], summary, [role="tab"]');
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        if (target?.closest('[role="tablist"], pre, [data-zoom-viewer]')) return;
+        if (target?.closest('[role="tablist"], pre, [data-zoom-viewer], [data-stem-viewport][tabindex]')) return;
         e.preventDefault();
         (e.key === 'ArrowLeft' ? h.prev : h.next)?.();
         return;

@@ -1,4 +1,4 @@
-import { Maximize, MoveHorizontal, ZoomIn, ZoomOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Maximize, MoveHorizontal, ZoomIn, ZoomOut } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { es } from '../../i18n/es';
 import { Button, IconButton } from '../Button/Button';
@@ -28,12 +28,18 @@ export function ImageViewer({
   naturalWidth = 1200,
   naturalHeight = 1800,
   caption,
+  fill,
+  pager,
 }: {
   src: string;
   alt: string;
   naturalWidth?: number;
   naturalHeight?: number;
   caption?: string;
+  /** la caja ocupa el alto disponible del contenedor (PLAN-LAYOUT 11.1) */
+  fill?: boolean;
+  /** paginador en la misma barra: una página por vez */
+  pager?: { index: number; total: number; onPrev(): void; onNext(): void };
 }) {
   const [zoom, setZoom] = useState<'fit' | number>('fit');
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -168,7 +174,7 @@ export function ImageViewer({
   const width = zoom === 'fit' ? '100%' : `${(nat.current.w * zoom) / 100}px`;
   const url = nonce ? `${src}?r=${nonce}` : src;
   return (
-    <figure className={s.viewer}>
+    <figure className={`${s.viewer} ${fill ? s.fill : ''}`}>
       <div className={s.toolbar} role="toolbar" aria-label="Zoom de la imagen">
         <IconButton label={es.image.zoomOut} onClick={() => zoomBy(-1)} disabled={currentLevel <= ZOOM_MIN}>
           <ZoomOut size={20} strokeWidth={1.75} aria-hidden="true" />
@@ -179,12 +185,42 @@ export function ImageViewer({
         <IconButton label={es.image.zoomIn} onClick={() => zoomBy(1)} disabled={currentLevel >= ZOOM_MAX}>
           <ZoomIn size={20} strokeWidth={1.75} aria-hidden="true" />
         </IconButton>
-        <Button size="sm" variant="ghost" icon={<MoveHorizontal size={16} aria-hidden="true" />} onClick={() => setLevel('fit')} aria-pressed={zoom === 'fit'}>
-          {es.image.fit}
+        <Button
+          size="sm"
+          variant="ghost"
+          className={s.tbBtn}
+          icon={<MoveHorizontal size={16} aria-hidden="true" />}
+          onClick={() => setLevel('fit')}
+          aria-pressed={zoom === 'fit'}
+          aria-label={es.image.fit}
+          title={es.image.fit}
+        >
+          <span className={s.tbText}>{es.image.fit}</span>
         </Button>
-        <Button size="sm" variant="ghost" icon={<Maximize size={16} aria-hidden="true" />} onClick={() => setLevel(100)}>
-          {es.image.reset}
+        <Button
+          size="sm"
+          variant="ghost"
+          className={s.tbBtn}
+          icon={<Maximize size={16} aria-hidden="true" />}
+          onClick={() => setLevel(100)}
+          aria-label={es.image.reset}
+          title={es.image.reset}
+        >
+          <span className={s.tbText}>{es.image.reset}</span>
         </Button>
+        {pager && pager.total > 1 && (
+          <span className={s.pager}>
+            <IconButton label={es.image.prevPage} onClick={pager.onPrev} disabled={pager.index <= 0} data-action="page-prev">
+              <ChevronLeft size={20} strokeWidth={1.75} aria-hidden="true" />
+            </IconButton>
+            <span className={s.pageText} aria-live="polite">
+              {es.image.page(pager.index + 1, pager.total)}
+            </span>
+            <IconButton label={es.image.nextPage} onClick={pager.onNext} disabled={pager.index >= pager.total - 1} data-action="page-next">
+              <ChevronRight size={20} strokeWidth={1.75} aria-hidden="true" />
+            </IconButton>
+          </span>
+        )}
         <span className="sr-only" aria-live="polite">
           {announce}
         </span>

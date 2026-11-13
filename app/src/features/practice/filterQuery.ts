@@ -1,4 +1,4 @@
-import type { DocId } from '../../bank/types';
+import { DOC_IDS, type DocId } from '../../bank/types';
 import type { PracticeFilter } from '../../storage/schema';
 
 const STATE_Q: Record<string, NonNullable<PracticeFilter['state']>> = {
@@ -13,15 +13,18 @@ const STATE_TO_Q = Object.fromEntries(Object.entries(STATE_Q).map(([k, v]) => [v
 export function filterFromQuery(sp: URLSearchParams): PracticeFilter {
   const f: PracticeFilter = {};
   const doc = sp.get('doc');
-  if (doc === 'gorgotsias' || doc === 'messer') f.doc = doc as DocId;
+  if (doc && (DOC_IDS as readonly string[]).includes(doc)) f.doc = doc as DocId;
   const sec = sp.get('sec');
   if (sec) f.section = sec;
+  const obj = sp.get('obj');
+  if (obj && /^\d\.\d{1,2}$/.test(obj)) f.objective = obj;
   const st = sp.get('estado');
   if (st && STATE_Q[st]) f.state = STATE_Q[st];
   if (sp.get('fav') === '1') f.onlyFavorites = true;
   const lista = sp.get('lista');
   if (lista === 'falladas' || lista === 'marcadas' || lista === 'favoritas') f.list = lista;
   else if (lista?.startsWith('intento:')) f.list = `attempt:${lista.slice('intento:'.length)}`;
+  else if (lista?.startsWith('plan:') && lista.length > 'plan:'.length) f.list = `plan:${lista.slice('plan:'.length)}`;
   return f;
 }
 
@@ -30,6 +33,7 @@ export function filterToQuery(f: PracticeFilter): string {
   if (f.list) sp.set('lista', f.list.startsWith('attempt:') ? `intento:${f.list.slice(8)}` : f.list);
   if (f.doc) sp.set('doc', f.doc);
   if (f.section) sp.set('sec', f.section);
+  if (f.objective) sp.set('obj', f.objective);
   if (f.state && f.state !== 'all') sp.set('estado', STATE_TO_Q[f.state]!);
   if (f.onlyFavorites) sp.set('fav', '1');
   const s = sp.toString();

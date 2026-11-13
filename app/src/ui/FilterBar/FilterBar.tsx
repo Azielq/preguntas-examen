@@ -9,6 +9,7 @@ import s from './FilterBar.module.css';
 export interface FilterValue {
   doc?: DocId;
   section?: string;
+  objective?: string;
   state?: 'all' | 'unanswered' | 'failed' | 'flagged' | 'pending_review';
   onlyFavorites?: boolean;
 }
@@ -17,7 +18,13 @@ export interface FilterSectionOption {
   section: string;
   doc: DocId;
   label: string;
-  group: 'cap' | 'sim' | 'messer';
+  group: 'cap' | 'sim' | 'messer' | 'messerfull';
+}
+
+export interface FilterObjectiveOption {
+  code: string;
+  /** título literal del PDF (inglés) */
+  title: string;
 }
 
 export interface FilterBarProps {
@@ -26,10 +33,15 @@ export interface FilterBarProps {
   /** cantidad real de preguntas si se aplicara este cambio al filtro actual */
   countFor(patch: Partial<FilterValue>): number;
   total: number;
-  available: { docs: { id: DocId; label: string }[]; sections: FilterSectionOption[] };
+  available: { docs: { id: DocId; label: string }[]; sections: FilterSectionOption[]; objectives?: FilterObjectiveOption[] };
   showSection?: boolean;
   mobile?: boolean;
+  /** encabezado compacto de la pantalla de pregunta: solo el botón "Filtros (n)" que abre la hoja */
+  compact?: boolean;
 }
+
+/** Único documento que trae objetivo SY0-701. */
+export const OBJECTIVE_DOC: DocId = 'messerfull';
 
 const STATES: { v: NonNullable<FilterValue['state']>; label: string }[] = [
   { v: 'all', label: es.filter.allF },
@@ -40,7 +52,7 @@ const STATES: { v: NonNullable<FilterValue['state']>; label: string }[] = [
 ];
 
 export function activeCount(f: FilterValue, showSection: boolean): number {
-  return (f.doc ? 1 : 0) + (showSection && f.section ? 1 : 0) + (f.state && f.state !== 'all' ? 1 : 0) + (f.onlyFavorites ? 1 : 0);
+  return (f.doc ? 1 : 0) + (showSection && f.section ? 1 : 0) + (f.objective ? 1 : 0) + (f.state && f.state !== 'all' ? 1 : 0) + (f.onlyFavorites ? 1 : 0);
 }
 
 function Controls({ value, onChange, countFor, available, showSection, idp }: FilterBarProps & { idp: string }) {
@@ -49,7 +61,11 @@ function Controls({ value, onChange, countFor, available, showSection, idp }: Fi
     { key: 'cap', label: es.filter.groupCap },
     { key: 'sim', label: es.filter.groupSim },
     { key: 'messer', label: es.filter.groupMesser },
+    { key: 'messerfull', label: es.filter.groupMesserFull },
   ];
+  const objectives = available.objectives ?? [];
+  // el objetivo solo existe en el libro completo de Messer: con otro documento elegido no se ofrece
+  const showObjective = objectives.length > 0 && (!value.doc || value.doc === OBJECTIVE_DOC);
   return (
     <div className={s.controls}>
       <div className="field">
@@ -61,7 +77,8 @@ function Controls({ value, onChange, countFor, available, showSection, idp }: Fi
           onChange={(e) => {
             const doc = (e.target.value || undefined) as DocId | undefined;
             const keepSection = value.section && available.sections.find((x) => x.section === value.section)?.doc === doc;
-            onChange({ ...value, doc, section: keepSection ? value.section : undefined });
+            const keepObjective = !doc || doc === OBJECTIVE_DOC;
+            onChange({ ...value, doc, section: keepSection ? value.section : undefined, objective: keepObjective ? value.objective : undefined });
           }}
         >
           <option value="">
@@ -84,7 +101,8 @@ function Controls({ value, onChange, countFor, available, showSection, idp }: Fi
             onChange={(e) => {
               const section = e.target.value || undefined;
               const doc = section ? available.sections.find((x) => x.section === section)?.doc : value.doc;
-              onChange({ ...value, section, doc: doc ?? value.doc });
+              const nd = doc ?? value.doc;
+              onChange({ ...value, section, doc: nd, objective: !nd || nd === OBJECTIVE_DOC ? value.objective : undefined });
             }}
           >
             <option value="">
@@ -104,6 +122,30 @@ function Controls({ value, onChange, countFor, available, showSection, idp }: Fi
               );
             })}
           </select>
+        </div>
+      )}
+      {showObjective && (
+        <div className="field">
+          <label htmlFor={`${idp}-obj`}>{es.filter.objective}</label>
+          <select
+            id={`${idp}-obj`}
+            className="select"
+            value={value.objective ?? ''}
+            aria-describedby={`${idp}-obj-help`}
+            onChange={(e) => onChange({ ...value, objective: e.target.value || undefined })}
+          >
+            <option value="">
+              {es.filter.allM} ({countFor({ objective: undefined })})
+            </option>
+            {objectives.map((o) => (
+              <option key={o.code} value={o.code}>
+                {o.code} · {o.title} ({countFor({ objective: o.code })})
+              </option>
+            ))}
+          </select>
+          <span id={`${idp}-obj-help`} className="small muted">
+            {es.filter.objectiveHelp}
+          </span>
         </div>
       )}
       <div className="field">
@@ -147,11 +189,13 @@ export function FilterBar(props: FilterBarProps) {
       )}
     </div>
   );
-  if (props.mobile) {
+  if (props.mobile || props.compact) {
     return (
-      <div className={s.bar}>
+      <div className={props.compact ? s.compact : s.bar}>
         <div className={s.mobileRow}>
           <Button
+            size={props.compact ? 'sm' : 'md'}
+            data-action="filters"
             icon={<SlidersHorizontal size={18} aria-hidden="true" />}
             onClick={() => {
               setDraft(props.value);
@@ -160,13 +204,14 @@ export function FilterBar(props: FilterBarProps) {
           >
             {es.filter.mobileButton(n)}
           </Button>
-          {counter}
+          {!props.compact && counter}
         </div>
         <Dialog
           open={sheet}
           onClose={() => setSheet(false)}
           title="Filtros"
           size="sheet"
+          sheet="filters"
           actions={
             <>
               <Button onClick={() => setDraft({})}>{es.filter.clear}</Button>
@@ -204,5 +249,5 @@ export function FilterBar(props: FilterBarProps) {
 
 /** El borrador expresado como parche completo sobre el filtro aplicado. */
 function asPatch(draft: FilterValue): Partial<FilterValue> {
-  return { doc: draft.doc, section: draft.section, state: draft.state ?? 'all', onlyFavorites: draft.onlyFavorites };
+  return { doc: draft.doc, section: draft.section, objective: draft.objective, state: draft.state ?? 'all', onlyFavorites: draft.onlyFavorites };
 }

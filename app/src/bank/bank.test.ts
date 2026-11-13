@@ -8,7 +8,7 @@ import { validateQuestions } from './validate';
 describe('banco cargado', () => {
   const bank = loadedBank();
   const { report } = readRaw();
-  const sum = (k: 'found' | 'scorable' | 'pending') => report.stats.gorgotsias[k] + report.stats.messer[k];
+  const sum = (k: 'found' | 'scorable' | 'pending') => Object.values(report.stats).reduce((n, d) => n + d[k], 0);
 
   it('pasa la validación sin problemas', () => {
     expect(validateQuestions(bank.questions)).toEqual([]);
@@ -23,16 +23,18 @@ describe('banco cargado', () => {
     expect(bank.questions.filter((q) => getAnswerState(q) === 'pending').length).toBe(report.pending.length);
   });
 
-  it('unidades de duplicados: 586 en total y 583 con al menos una copia puntuable', () => {
+  it('unidades de duplicados: 796 en total y 793 con al menos una copia puntuable', () => {
     // unidades = preguntas - preguntas en grupos + grupos (dato del reporte)
     const expectedUnits = sum('found') - report.questionsInIdenticalDuplicateGroups + report.identicalDuplicateGroups;
     expect(bank.indexes.units.size).toBe(expectedUnits);
-    expect(bank.indexes.units.size).toBe(586);
+    expect(bank.indexes.units.size).toBe(796);
     const withScorable = [...bank.indexes.units.values()].filter((u) => u.members.some((id) => isScorable(bank.indexes.byId.get(id)!)));
-    expect(withScorable.length).toBe(583);
-    expect(examCandidates(bank.questions, bank.indexes.units, bank.indexes.byId, { source: 'both', includeAiProposed: false }).length).toBe(583);
-    // ninguna unidad cruza documentos
-    for (const u of bank.indexes.units.values()) expect(new Set(u.members.map((id) => bank.indexes.byId.get(id)!.doc)).size).toBe(1);
+    expect(withScorable.length).toBe(793);
+    expect(examCandidates(bank.questions, bank.indexes.units, bank.indexes.byId, { source: 'both', includeAiProposed: false }).length).toBe(793);
+    // las únicas unidades que cruzan documentos son las 45 del extracto de Messer con su copia del libro completo
+    const cross = [...bank.indexes.units.values()].filter((u) => new Set(u.members.map((id) => bank.indexes.byId.get(id)!.doc)).size > 1);
+    expect(cross).toHaveLength(45);
+    for (const u of cross) expect(u.members.map((id) => bank.indexes.byId.get(id)!.doc).sort()).toEqual(['messer', 'messerfull']);
   });
 
   it('el validador detecta problemas estructurales', () => {

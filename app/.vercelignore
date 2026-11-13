@@ -5,3 +5,9 @@ e2e-output
 *.log
 data/_work
 scripts/__pycache__
+
+# Variables de entorno locales: las del despliegue se cargan en el panel de Vercel
+.env*
+!.env.example
+# Se regenera en el build (prebuild → prepare-bank)
+server/_generated/*.js

@@ -1,7 +1,7 @@
 import { getAnswerState } from '../bank/selectors';
-import type { BankIndexes, Question } from '../bank/types';
+import { objectiveCode, type BankIndexes, type Question } from '../bank/types';
 import { isScorable } from '../grading/grade';
-import type { AttemptsState, PracticeFilter, ProgressState, QuestionProgress } from '../storage/schema';
+import type { AnalysesState, AttemptsState, PracticeFilter, ProgressState, QuestionProgress } from '../storage/schema';
 
 export type StudyState = 'unseen' | 'seen' | 'ungraded' | 'correct' | 'incorrect';
 
@@ -49,6 +49,22 @@ export interface FilterContext {
   questions: Question[];
   progress: ProgressState;
   attempts: AttemptsState;
+  /** análisis con IA guardados (listas `plan:`) */
+  analyses?: AnalysesState;
+}
+
+/**
+ * Ids de "Practicar estos temas" (`plan:<intento>`) o de "Practicar este tema" (`plan:<intento>:<concepto>`).
+ * Lista congelada al guardar el análisis (PLAN-IA 10); los ids que ya no existan se ignoran al filtrar.
+ */
+export function planPracticeIds(analyses: AnalysesState | undefined, list: string): string[] {
+  const rest = list.slice('plan:'.length);
+  const sep = rest.indexOf(':');
+  const attemptId = sep < 0 ? rest : rest.slice(0, sep);
+  const conceptId = sep < 0 ? null : rest.slice(sep + 1);
+  const a = analyses?.byAttempt[attemptId];
+  if (!a) return [];
+  return conceptId === null ? a.derived.practiceIds : a.derived.practiceByConcept[conceptId] ?? [];
 }
 
 /** Aplica el filtro de práctica en orden del banco. */
@@ -58,6 +74,9 @@ export function filterQuestions(ctx: FilterContext, f: PracticeFilter): Question
   if (f.list?.startsWith('attempt:')) {
     const ids = new Set(attemptReviewIds(ctx.attempts, f.list.slice('attempt:'.length)));
     base = base.filter((q) => ids.has(q.id));
+  } else if (f.list?.startsWith('plan:')) {
+    const ids = new Set(planPracticeIds(ctx.analyses, f.list));
+    base = base.filter((q) => ids.has(q.id));
   } else if (f.list === 'falladas') base = base.filter((q) => qs[q.id]?.lastGraded?.outcome === 'incorrect');
   else if (f.list === 'marcadas') base = base.filter((q) => !!qs[q.id]?.flagged);
   else if (f.list === 'favoritas') base = base.filter((q) => !!qs[q.id]?.favorite);
@@ -65,13 +84,14 @@ export function filterQuestions(ctx: FilterContext, f: PracticeFilter): Question
     (q) =>
       (!f.doc || q.doc === f.doc) &&
       (!f.section || q.section === f.section) &&
+      (!f.objective || objectiveCode(q.objective) === f.objective) &&
       matchesState(q, qs[q.id], f.state ?? 'all') &&
       (!f.onlyFavorites || !!qs[q.id]?.favorite),
   );
 }
 
 export function activeFilterCount(f: PracticeFilter): number {
-  return (f.doc ? 1 : 0) + (f.section ? 1 : 0) + (f.state && f.state !== 'all' ? 1 : 0) + (f.onlyFavorites ? 1 : 0);
+  return (f.doc ? 1 : 0) + (f.section ? 1 : 0) + (f.objective ? 1 : 0) + (f.state && f.state !== 'all' ? 1 : 0) + (f.onlyFavorites ? 1 : 0);
 }
 
 // ---- Estadísticas (solo puntuables) ----

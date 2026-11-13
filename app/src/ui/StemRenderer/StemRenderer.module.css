@@ -6,6 +6,8 @@
 }
 .text {
   white-space: pre-wrap;
+  hyphens: none;
+  overflow-wrap: anywhere;
   font-size: var(--fs-stem);
   line-height: var(--lh-stem);
   font-weight: 450;
@@ -19,8 +21,18 @@
   border-radius: var(--r-md);
   padding: var(--sp-4);
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   white-space: pre;
   max-width: 100%;
+  /* sombra en el borde derecho mientras haya contenido oculto a la derecha; la cubierta (local) la tapa al llegar al final */
+  background:
+    linear-gradient(to left, var(--surface-2) 40%, transparent) right center / 28px 100% no-repeat local,
+    linear-gradient(to left, rgba(0, 0, 0, 0.16), transparent) right center / 14px 100% no-repeat scroll,
+    var(--surface-2);
+}
+.code:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
 }
 .code code {
   font-family: inherit;

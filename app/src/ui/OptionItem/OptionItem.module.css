@@ -58,6 +58,7 @@
 .text {
   flex: 1 1 22ch;
   min-width: 0;
+  hyphens: none;
   font-size: var(--fs-body);
   line-height: var(--lh-body);
 }
@@ -67,7 +68,8 @@
   gap: var(--sp-1);
   font-size: var(--fs-sm);
   font-weight: 600;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   animation: fade-in var(--dur-2) var(--ease-out);
 }
 .kbd {
@@ -155,4 +157,26 @@
   border-color: var(--border-strong);
   color: var(--text);
   background: var(--surface-2);
+}
+
+/* Compactación permitida por modo (PLAN-LAYOUT 2 y 12): solo alto mínimo y padding, nunca tipografía */
+:global(:root[data-qlayout='fit']) .row {
+  min-height: 48px;
+  padding: 10px 14px;
+}
+:global(:root[data-qlayout='fit']) .selected,
+:global(:root[data-qlayout='fit']) .correct,
+:global(:root[data-qlayout='fit']) .incorrect,
+:global(:root[data-qlayout='fit']) .missed {
+  padding: 9.5px 13.5px;
+}
+:global(:root[data-qlayout='fit-wide']) .row {
+  min-height: 44px;
+  padding: 8px 12px;
+}
+:global(:root[data-qlayout='fit-wide']) .selected,
+:global(:root[data-qlayout='fit-wide']) .correct,
+:global(:root[data-qlayout='fit-wide']) .incorrect,
+:global(:root[data-qlayout='fit-wide']) .missed {
+  padding: 7.5px 11.5px;
 }

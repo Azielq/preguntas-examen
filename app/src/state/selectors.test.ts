@@ -26,11 +26,14 @@ describe('filtros de práctica', () => {
   it('Documento y Sección', () => {
     expect(filterQuestions(ctx(p), { doc: 'gorgotsias' }).length).toBe(1140);
     expect(filterQuestions(ctx(p), { doc: 'messer' }).length).toBe(45);
+    expect(filterQuestions(ctx(p), { doc: 'messerfull' }).length).toBe(255);
+    expect(filterQuestions(ctx(p), { section: 'mf-b' }).length).toBe(85);
     expect(filterQuestions(ctx(p), { section: 'cap4' }).length).toBe(150);
     expect(filterQuestions(ctx(p), { section: 'sim3', doc: 'gorgotsias' }).length).toBe(100);
   });
   it('Sin responder, Falladas, Marcadas, Pendientes de revisión, Solo favoritas', () => {
-    expect(filterQuestions(ctx(p), { state: 'unanswered' }).length).toBe(1185 - 4);
+    expect(filterQuestions(ctx(p), { state: 'unanswered' }).length).toBe(bank.questions.length - 4);
+    expect(bank.questions.length).toBe(1440);
     expect(filterQuestions(ctx(p), { state: 'failed' }).map((q) => q.id)).toEqual(['gor-cap1-0002', 'msr-a080']);
     expect(filterQuestions(ctx(p), { state: 'flagged' }).map((q) => q.id)).toEqual(['gor-cap2-0111']);
     expect(filterQuestions(ctx(p), { state: 'pending_review' }).length).toBe(8);
@@ -38,6 +41,19 @@ describe('filtros de práctica', () => {
     expect(filterQuestions(ctx(p), { state: 'pending_review', section: 'cap1' }).map((q) => q.id)).toEqual(['gor-cap1-0023', 'gor-cap1-0024', 'gor-cap1-0026']);
     expect(filterQuestions(ctx(p), { doc: 'messer', state: 'failed' }).map((q) => q.id)).toEqual(['msr-a080']);
   });
+  it('Objetivo SY0-701: solo preguntas del libro completo con ese objetivo; combinable con estado', () => {
+    const o46 = filterQuestions(ctx(p), { objective: '4.6' });
+    expect(o46.length).toBeGreaterThan(0);
+    expect(o46.every((q) => q.doc === 'messerfull' && !!q.objective && 'code' in q.objective && q.objective.code === '4.6')).toBe(true);
+    expect(o46.map((q) => q.id)).toContain('msf-a014');
+    expect(filterQuestions(ctx(p), { objective: '4.6', doc: 'gorgotsias' })).toHaveLength(0);
+    expect(filterQuestions(ctx(p), { objective: '4.6', state: 'failed' })).toHaveLength(0);
+    // los objetivos que la extracción dejó solo como texto (raw) no se interpretan ni se asignan a un código
+    const raw = bank.questions.filter((q) => q.objective && 'raw' in q.objective).map((q) => q.id);
+    expect(raw.length).toBeGreaterThan(0);
+    for (const id of raw) for (const code of ['1.2', '4.9', '1.4']) expect(filterQuestions(ctx(p), { objective: code }).map((q) => q.id)).not.toContain(id);
+  });
+
   it('lista de un intento: incorrectas y omitidas', () => {
     const at = {
       schemaVersion: 1 as const,
@@ -77,7 +93,7 @@ describe('estados de estudio y contadores', () => {
     const base = sampleProgress();
     const before = progressStats(bank.questions, base);
     expect(before.scorable).toBe(bank.questions.filter(isScorable).length);
-    expect(before.scorable).toBe(1177);
+    expect(before.scorable).toBe(1432);
     expect(before).toMatchObject({ answered: 3, correct: 1, incorrect: 2 });
     const after = progressStats(bank.questions, applyAttempt(base, Q('gor-cap1-0024'), ['A'], 'ungraded', 'practice', 9));
     expect(after).toEqual(before);
